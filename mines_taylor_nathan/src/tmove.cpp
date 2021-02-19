@@ -71,7 +71,7 @@ int main(int argc, char **argv)
   move(2);
   turn(-135);//2
   move(2);
-  turn(-45);//1 not Necessary - alignment for ease of viewing
+  turn(-60);//1 not Necessary - alignment for ease of viewing
   
   //Do normal stuff
   ros::spin();
