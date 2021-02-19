@@ -59,7 +59,7 @@ int main(int argc, char **argv)
   move(.2);
   turn(-90);//9
   move(2);
-  turn(-90);//9
+  turn(-90);//8
   move(.2);
   turn(90);//7
   move(.8);
