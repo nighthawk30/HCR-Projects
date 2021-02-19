@@ -21,7 +21,7 @@ int main(int argc, char **argv)
   pub = node.advertise<geometry_msgs::Twist>("turtle1/cmd_vel", 10);
 
   //M Trace Algorithm
-  turn(45);//1
+  turn(60);//1 not Necessary - alignment for ease of viewing
   move(2);
   turn(-135);//2
   move(2);
@@ -71,7 +71,7 @@ int main(int argc, char **argv)
   move(2);
   turn(-135);//2
   move(2);
-  //1
+  turn(-45);//1 not Necessary - alignment for ease of viewing
   
   //Do normal stuff
   ros::spin();
