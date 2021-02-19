@@ -1,0 +1,4 @@
+<launch>
+<node name="turtlesim_node" pkg="turtlesim" type="turtlesim_node" />
+<node name="tmove" pkg="mines_taylor_nathan" type="tmove" output="screen" />
+</launch>
