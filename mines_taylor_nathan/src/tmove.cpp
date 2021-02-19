@@ -20,8 +20,10 @@ int main(int argc, char **argv)
   ros::Rate rate(10);
   pub = node.advertise<geometry_msgs::Twist>("turtle1/cmd_vel", 10);
 
-  //M Trace Algorithm
-  turn(60);//1 not Necessary - alignment for ease of viewing
+  //init time
+  ros::Duration(2.0).sleep();
+  //M Trace Algorith
+  //turn(45);//1 not Necessary - alignment for ease of viewing
   move(2);
   turn(-135);//2
   move(2);
@@ -71,7 +73,7 @@ int main(int argc, char **argv)
   move(2);
   turn(-135);//2
   move(2);
-  turn(-60);//1 not Necessary - alignment for ease of viewing
+  //turn(45);//1 not Necessary - alignment for ease of viewing
   
   //Do normal stuff
   ros::spin();
@@ -106,7 +108,7 @@ void turn(double angle)
 
 void move(double distance)
 {
-  double speed = 3;
+  double speed = 4;
   geometry_msgs::Twist msg;
   geometry_msgs::Twist stop;
   msg.linear.x = speed;
