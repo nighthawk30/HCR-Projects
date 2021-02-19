@@ -85,7 +85,7 @@ void turn(double angle)
   double angular_speed = 1;
   double PI = 3.141592653589693;
 
-  //The rotation angle must be linearly adjusted to meet the real angle
+  //The rotation angle is off the real angle: cf scales the rotation to correct
   double cf = .02/105*abs(angle)+.985-.02/105*30+.002;//linear apprx of correction
   double radians = angle * PI/180*cf;
 
