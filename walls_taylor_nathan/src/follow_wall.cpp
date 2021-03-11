@@ -73,7 +73,7 @@ int main(int argc, char **argv)
   qtable["med"] = 0;
   qtable["far"] = 5;
 
-  double etime = ros::Time::now().toSec() + 15;
+  double etime = ros::Time::now().toSec() + 10;
   std::string state = "";
   while (ros::Time::now().toSec() < etime)
     {
@@ -123,47 +123,3 @@ void moveTurn(double distance, double ang_degrees)
     }
   pub.publish(stop);
 }
-/*
-void turn(double angle)
-{
-  //ccw is positive
-  double angular_speed = 1;
-  double PI = 3.141592653589693;
-  double radians = angle * PI/180;
-
-  geometry_msgs::Pose2D msg;
-  geometry_msgs::Pose2D stop;//stop the rotation
-  if (angle >= 0)
-    msg.theta = angular_speed;
-  else
-    msg.theta = -angular_speed;
-  
-  double current_angle = 0;
-  double start = ros::Time::now().toSec();
-  while (abs(current_angle) < abs(radians))
-    {
-      current_angle = angular_speed * (ros::Time::now().toSec() - start);
-      pub.publish(msg);
-      ros::spinOnce();//gives up control for a little bit so laser can scan
-    }
-  pub.publish(stop);
-}
-
-void move(double distance)
-{
-  double speed = 1;
-  geometry_msgs::Pose2D msg;
-  geometry_msgs::Pose2D stop;
-  msg.x = speed;
-
-  double current_distance = 0;
-  double start = ros::Time::now().toSec();
-  while (current_distance < distance)
-    {
-      current_distance = speed * (ros::Time::now().toSec() - start);
-      pub.publish(msg);
-      ros::spinOnce();//give up control each cycle for distributed system
-    }
-  pub.publish(stop);
-}
-*/
