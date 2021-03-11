@@ -20,12 +20,33 @@ void turn(double angle);//ccw
 */
 void moveTurn(double distance, double ang_degrees);//ccw+
 
-void poseCallback(const sensor_msgs::LaserScan::ConstPtr& scan)
+class listen
 {
+public:
+  listen()
+  {
+    left_dist = 0;
+    right_dist = 0;
+    forward_dist = 0;
+  }
+  void poseCallback(const sensor_msgs::LaserScan::ConstPtr& scan);
+  double left_dist;
+  double forward_dist;
+  double right_dist;
+};
+
+
+void listen::poseCallback(const sensor_msgs::LaserScan::ConstPtr& scan)
+{
+  /*
   ROS_INFO("Min=: [%f]",scan->ranges[scan->angle_min]);
   ROS_INFO("Half=: [%f]",scan->ranges[scan->angle_max/2]);
   ROS_INFO("Max=: [%f]",scan->ranges[scan->angle_max]);
   ROS_INFO("---------------------------");
+  */
+  left_dist = scan->ranges[scan->angle_min];
+  forward_dist = scan->ranges[scan->angle_max/2];
+  right_dist = scan->ranges[scan->angle_max];
 }
 
 int main(int argc, char **argv)
@@ -35,17 +56,21 @@ int main(int argc, char **argv)
   ros::NodeHandle node;
   // Loop at 10Hz, publishing movement commands until we shut down
   ros::Rate rate(10);
+  listen ear;//create class instance in main to access callback
   pub = node.advertise<geometry_msgs::Pose2D>("/triton_lidar/vel_cmd", 10);
-  sub = node.subscribe<sensor_msgs::LaserScan>("/scan", 1000, poseCallback);
+  sub = node.subscribe<sensor_msgs::LaserScan>("/scan", 1000, &listen::poseCallback, &ear);
   //init time
   ros::Duration(2.0).sleep();
   //
   ROS_INFO("Get RRRReeadddy toooooo Ruuummmmmmblllleee");
   //Setup
-  moveTurn(5,0);
+  moveTurn(1,0);
   moveTurn(0,-90);
+  moveTurn(1,0);
   //
-
+  ROS_INFO("Debug");
+  ROS_INFO("Test_Forward=: [%f]",ear.forward_dist);
+  ROS_INFO("Debug");
 
   //DEFINE STATE ACTION PAIRS
   std::map<std::string, double> qtable;//state, action(drive = .1, angle)
@@ -53,15 +78,15 @@ int main(int argc, char **argv)
   qtable["med"] = 0;
   qtable["far"] = 5;
 
+  /*
+  double etime = ros::Time::now().toSec() + 10);
+while (ros::Time::now().toSec() < etime)
+  {
+    //check state
 
-  double etime = ros::Time::now() + ros::Duration(10.0);
-  while (ros::Time::now() < etime)
-    {
-      //check state
-
-      //choose action
-    }
-
+    //choose action
+  }
+  */
   ros::spin();
 }
 
@@ -79,7 +104,7 @@ void moveTurn(double distance, double ang_degrees)
   geometry_msgs::Pose2D stop;
 
   double start = ros::Time::now().toSec();
-  while (cang < ang_rad || cdist < distance)
+  while (abs(cang) < abs(ang_rad) || cdist < distance)
     {
       cang = angular_speed * (ros::Time::now().toSec() - start);
       cdist = speed * (ros::Time::now().toSec() - start);
