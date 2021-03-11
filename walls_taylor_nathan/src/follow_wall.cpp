@@ -20,10 +20,10 @@ void turn(double angle);//ccw
 */
 void moveTurn(double distance, double ang_degrees);//ccw+
 
-class listen
+class Listen
 {
 public:
-  listen()
+  Listen()
   {
     left_dist = 0;
     right_dist = 0;
@@ -36,7 +36,7 @@ public:
 };
 
 
-void listen::poseCallback(const sensor_msgs::LaserScan::ConstPtr& scan)
+void Listen::poseCallback(const sensor_msgs::LaserScan::ConstPtr& scan)
 {
   /*
   ROS_INFO("Min=: [%f]",scan->ranges[scan->angle_min]);
@@ -56,47 +56,49 @@ int main(int argc, char **argv)
   ros::NodeHandle node;
   // Loop at 10Hz, publishing movement commands until we shut down
   ros::Rate rate(10);
-  listen ear;//create class instance in main to access callback
+  Listen listening;//create class instance in main to access callback
   pub = node.advertise<geometry_msgs::Pose2D>("/triton_lidar/vel_cmd", 10);
-  sub = node.subscribe<sensor_msgs::LaserScan>("/scan", 1000, &listen::poseCallback, &ear);
+  sub = node.subscribe<sensor_msgs::LaserScan>("/scan", 1000, &Listen::poseCallback, &listening);
   //init time
   ros::Duration(2.0).sleep();
   //
   ROS_INFO("Get RRRReeadddy toooooo Ruuummmmmmblllleee");
   //Setup
-  moveTurn(1,0);
+  moveTurn(5,0);
   moveTurn(0,-90);
-  moveTurn(1,0);
-  //
-  ROS_INFO("Debug");
-  ROS_INFO("Test_Forward=: [%f]",ear.forward_dist);
-  ROS_INFO("Debug");
-
+  ROS_INFO("Setup Complete\n-------------------");
   //DEFINE STATE ACTION PAIRS
   std::map<std::string, double> qtable;//state, action(drive = .1, angle)
   qtable["close"] = -5;
   qtable["med"] = 0;
   qtable["far"] = 5;
 
-  /*
-  double etime = ros::Time::now().toSec() + 10);
-while (ros::Time::now().toSec() < etime)
-  {
-    //check state
-
-    //choose action
-  }
-  */
+  double etime = ros::Time::now().toSec() + 15;
+  std::string state = "";
+  while (ros::Time::now().toSec() < etime)
+    {
+      //update state
+      if (listening.left_dist < 2)
+	state = "close";
+      else if (listening.left_dist < 2.6)
+	state = "med";
+      else if (listening.left_dist < 3.9)
+	state = "far";
+      
+      //choose action
+      moveTurn(.1,qtable.at(state));
+      ros::spinOnce();
+    }
   ros::spin();
 }
 
 //need to be able to do both at once
 void moveTurn(double distance, double ang_degrees)
 {
-  double angular_speed = .2;
+  double angular_speed = .5;
   if (ang_degrees <= 0)
     angular_speed *= -1;
-  double speed = .5;
+  double speed = .2;
   double PI = 3.141592653589693;
   double ang_rad = ang_degrees * PI/180;
   double cdist = 0;//current distance
