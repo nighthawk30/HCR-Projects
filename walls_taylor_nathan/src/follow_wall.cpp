@@ -35,16 +35,17 @@ ros::Subscriber sub;
 ros::ServiceClient client;
 
 void moveTurn(double distance, double ang_degrees);//ccw+
-std::string setState(Listen listening);
+std::string getState(Listen listening);
+double getAction(std::string state);
 
 void Listen::poseCallback(const sensor_msgs::LaserScan::ConstPtr& scan)
 {
-  //360 degrees 360 size
+  //360 degrees 360 size array
   forward_dist = scan->ranges[0];//forward
   left_dist = scan->ranges[90];//left
   back_dist = scan->ranges[180];
   right_dist = scan->ranges[270];
-  ROS_INFO("Left: %f", left_dist);//comment out
+  //ROS_INFO("Left: %f", left_dist);//comment out
 }
 
 int main(int argc, char **argv)
@@ -52,47 +53,49 @@ int main(int argc, char **argv)
   // INITIALIZE THE NODE
   ros::init(argc, argv, "wall_flower");
   ros::NodeHandle node;
-  // Loop at 10Hz, publishing movement commands until we shut down
   ros::Rate rate(10);
+  
+  //Connection Setup
   Listen listening;//create class instance in main to access callback
   pub = node.advertise<geometry_msgs::Pose2D>("/triton_lidar/vel_cmd", 10);
   sub = node.subscribe<sensor_msgs::LaserScan>("/scan", 1000, &Listen::poseCallback, &listening);
   client = node.serviceClient<gazebo_msgs::SetModelState>("/gazebo/set_model_state");
+
   //init time
   ros::Duration(2.0).sleep();
-  //
-  ROS_INFO("Get RRRReeadddy toooooo Ruuummmmmmblllleee");
   //Setup
-  
   gazebo_msgs::SetModelState reset;
   reset.request.model_state.model_name = "triton_lidar";
   reset.request.model_state.pose.position.x = 3.7;
   client.call(reset);
   moveTurn(0,-90);
-  
   ROS_INFO("Setup Complete\n-------------------");
 
-
-  //DEFINE STATE ACTION PAIRS
-  std::map<std::string, double> qtable;//state, action(drive = .1, angle)
-  qtable["L_c"] = -5;
-  qtable["L_m"] = 0;
-  qtable["L_f"] = 5;
-  qtable["F_c"] = -10;
+  //Run
   double etime = ros::Time::now().toSec() + 30;
-  std::string state = "";
   while (ros::Time::now().toSec() < etime)
     {
-      //update state
-      state = setState(listening);
       //choose action
-      moveTurn(.1,qtable.at(state));
+      moveTurn(.1,getAction(getState(listening)));
       ros::spinOnce();
     }
   ros::spin();
 }
 
-std::string setState(Listen listening)
+//DEFINE STATE ACTION PAIRS
+double getAction(std::string state)
+{
+  std::map<std::string, double> qtable;//state, action(drive = .1, angle)
+  qtable["L_c"] = -5;
+  qtable["L_m"] = 0;
+  qtable["L_f"] = 5;
+  qtable["F_c"] = -10;
+  
+  return qtable.at(state);
+}
+
+//define states and return current state
+std::string getState(Listen listening)
 {
   std::string state = "";
   if (listening.left_dist > .18)
