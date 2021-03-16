@@ -5,20 +5,12 @@
 #include "ros/ros.h"
 #include "geometry_msgs/Pose2D.h"
 #include "sensor_msgs/LaserScan.h"
+#include "gazebo_msgs/ModelState.h"
 #include "std_msgs/String.h"
 #include <string>
 #include <map>
 #include <cstdlib>
-
 #include <cmath>
-ros::Publisher pub;
-ros::Subscriber sub;
-
-/*
-void move(double distance);
-void turn(double angle);//ccw
-*/
-void moveTurn(double distance, double ang_degrees);//ccw+
 
 class Listen
 {
@@ -28,25 +20,28 @@ public:
     left_dist = 0;
     right_dist = 0;
     forward_dist = 0;
+    back_dist = 0;
   }
   void poseCallback(const sensor_msgs::LaserScan::ConstPtr& scan);
   double left_dist;
   double forward_dist;
   double right_dist;
+  double back_dist;
 };
 
+ros::Publisher pub;
+ros::Subscriber sub;
+
+void moveTurn(double distance, double ang_degrees);//ccw+
+std::string setState(Listen listening);
 
 void Listen::poseCallback(const sensor_msgs::LaserScan::ConstPtr& scan)
 {
-  /*
-  ROS_INFO("Min=: [%f]",scan->ranges[scan->angle_min]);
-  ROS_INFO("Half=: [%f]",scan->ranges[scan->angle_max/2]);
-  ROS_INFO("Max=: [%f]",scan->ranges[scan->angle_max]);
-  ROS_INFO("---------------------------");
-  */
-  left_dist = scan->ranges[scan->angle_min];
-  forward_dist = scan->ranges[scan->angle_max/2];
-  right_dist = scan->ranges[scan->angle_max];
+  //360 degrees 360 size
+  forward_dist = scan->ranges[0];//forward
+  left_dist = scan->ranges[90];//left
+  back_dist = scan->ranges[180];
+  right_dist = scan->ranges[270];
 }
 
 int main(int argc, char **argv)
@@ -69,27 +64,36 @@ int main(int argc, char **argv)
   ROS_INFO("Setup Complete\n-------------------");
   //DEFINE STATE ACTION PAIRS
   std::map<std::string, double> qtable;//state, action(drive = .1, angle)
-  qtable["close"] = -5;
-  qtable["med"] = 0;
-  qtable["far"] = 5;
-
-  double etime = ros::Time::now().toSec() + 10;
+  qtable["L_c"] = -5;
+  qtable["L_m"] = 0;
+  qtable["L_f"] = 5;
+  qtable["F_c"] = -10;
+  double etime = ros::Time::now().toSec() + 30;
   std::string state = "";
   while (ros::Time::now().toSec() < etime)
     {
       //update state
-      if (listening.left_dist < 2)
-	state = "close";
-      else if (listening.left_dist < 2.6)
-	state = "med";
-      else if (listening.left_dist < 3.9)
-	state = "far";
-      
+      state = setState(listening);
       //choose action
       moveTurn(.1,qtable.at(state));
       ros::spinOnce();
     }
   ros::spin();
+}
+
+std::string setState(Listen listening)
+{
+  std::string state = "";
+  if (listening.left_dist > .18)
+    state = "L_f";
+  else if (listening.left_dist < .18 && listening.left_dist > .16)
+    state = "L_m";
+  else if (listening.left_dist < .16)
+    state = "L_c";
+  if (listening.forward_dist < 1)
+    state = "F_c";
+  
+  return state;
 }
 
 //need to be able to do both at once
