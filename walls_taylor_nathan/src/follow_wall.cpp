@@ -12,6 +12,7 @@
 #include <map>
 #include <cstdlib>
 #include <cmath>
+#include <vector>
 
 class Listen
 {
@@ -85,13 +86,21 @@ int main(int argc, char **argv)
 //DEFINE STATE ACTION PAIRS
 double getAction(std::string state)
 {
-  std::map<std::string, double> qtable;//state, action(drive = .1, angle)
-  qtable["L_c"] = -5;
-  qtable["L_m"] = 0;
-  qtable["L_f"] = 5;
-  qtable["F_c"] = -10;
+  std::map<std::string, std::vector<double>> qtable;//state, action(drive = .1, angle)
+  //Angles: -10,-5,0,5
+  qtable["L_c"] = {0,1,0,0};//{0,1,0,0}
+  qtable["L_m"] = {0,0,1,0};//{0,0,1,0}
+  qtable["L_f"] = {0,0,0,1};//{0,0,0,1}
+  qtable["F_c"] = {1,0,0,0};//{1,0,0,0}
+  int action[4] = {-10,-5,0,5};
+  std::vector<double> plane = qtable.at(state);
+  //find element with highest probability
+  int high_index = 0;
+  for (int i = 0; i < plane.size(); i++)
+    if (plane[i] > plane[high_index])
+      	high_index = i;
   
-  return qtable.at(state);
+  return action[high_index];
 }
 
 //define states and return current state
