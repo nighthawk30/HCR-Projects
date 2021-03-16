@@ -4,8 +4,9 @@
 */
 #include "ros/ros.h"
 #include "geometry_msgs/Pose2D.h"
+#include "geometry_msgs/Pose.h"
 #include "sensor_msgs/LaserScan.h"
-#include "gazebo_msgs/ModelState.h"
+#include "gazebo_msgs/SetModelState.h"
 #include "std_msgs/String.h"
 #include <string>
 #include <map>
@@ -31,6 +32,7 @@ public:
 
 ros::Publisher pub;
 ros::Subscriber sub;
+ros::ServiceClient client;
 
 void moveTurn(double distance, double ang_degrees);//ccw+
 std::string setState(Listen listening);
@@ -42,6 +44,7 @@ void Listen::poseCallback(const sensor_msgs::LaserScan::ConstPtr& scan)
   left_dist = scan->ranges[90];//left
   back_dist = scan->ranges[180];
   right_dist = scan->ranges[270];
+  ROS_INFO("Left: %f", left_dist);//comment out
 }
 
 int main(int argc, char **argv)
@@ -54,14 +57,22 @@ int main(int argc, char **argv)
   Listen listening;//create class instance in main to access callback
   pub = node.advertise<geometry_msgs::Pose2D>("/triton_lidar/vel_cmd", 10);
   sub = node.subscribe<sensor_msgs::LaserScan>("/scan", 1000, &Listen::poseCallback, &listening);
+  client = node.serviceClient<gazebo_msgs::SetModelState>("/gazebo/set_model_state");
   //init time
   ros::Duration(2.0).sleep();
   //
   ROS_INFO("Get RRRReeadddy toooooo Ruuummmmmmblllleee");
   //Setup
-  moveTurn(5,0);
+  
+  gazebo_msgs::SetModelState reset;
+  reset.request.model_state.model_name = "triton_lidar";
+  reset.request.model_state.pose.position.x = 3.7;
+  client.call(reset);
   moveTurn(0,-90);
+  
   ROS_INFO("Setup Complete\n-------------------");
+
+
   //DEFINE STATE ACTION PAIRS
   std::map<std::string, double> qtable;//state, action(drive = .1, angle)
   qtable["L_c"] = -5;
