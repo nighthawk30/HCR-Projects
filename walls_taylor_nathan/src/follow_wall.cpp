@@ -87,14 +87,15 @@ int main(int argc, char **argv)
 double getAction(std::string state)
 {
   std::map<std::string, std::vector<double>> qtable;//state, action(drive = .1, angle)
-  //Angles: -10,-5,0,5
-  qtable["L_c"] = {0,1,0,0};//{0,1,0,0}
-  qtable["L_m"] = {0,0,1,0};//{0,0,1,0}
-  qtable["L_f"] = {0,0,0,1};//{0,0,0,1}
-  qtable["F_c"] = {1,0,0,0};//{1,0,0,0}
+  //Angles:      -10,-5,0,5
+  qtable["L_c"] = {0,1,0,0};
+  qtable["L_m"] = {0,0,1,0};
+  qtable["L_f"] = {0,0,0,1};
+  qtable["F_c"] = {1,0,0,0};
+  
   int action[4] = {-10,-5,0,5};
   std::vector<double> plane = qtable.at(state);
-  //find element with highest probability
+  //find element with highest probability - change to choose one randomly based on probability
   int high_index = 0;
   for (int i = 0; i < plane.size(); i++)
     if (plane[i] > plane[high_index])
