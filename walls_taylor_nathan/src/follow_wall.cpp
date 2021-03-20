@@ -68,11 +68,26 @@ int main(int argc, char **argv)
   reset.request.model_state.model_name = "triton_lidar";
   reset.request.model_state.pose.position.x = 3.7;
   client.call(reset);
-  moveTurn(0,-90);
+  //moveTurn(0,-90);
   ROS_INFO("Setup Complete\n-------------------");
 
+  //TESTING CODE
+
+
+
+  //std::map<std::vector<int>, std::vector<double>>* qt;// = setTable();
+  //maps angles and corresponding distances to turning rates
   std::map<std::vector<int>, std::vector<double>>* qt = setTable();
+
+  ROS_INFO("Size: %i", qt->size());
+
+
+  //TESTING CODE
+
+
+  
   //Run
+  /*
   double etime = ros::Time::now().toSec() + 30;
   while (ros::Time::now().toSec() < etime)
     {
@@ -80,6 +95,7 @@ int main(int argc, char **argv)
       moveTurn(.1,getAction(qt, getState(listening)));
       ros::spinOnce();
     }
+  */
   ros::spin();
 }
 
@@ -104,7 +120,7 @@ double getAction(std::map<std::vector<int>, std::vector<double>>* qt, std::vecto
 std::map<std::vector<int>, std::vector<double>>* setTable()
 {
   //maps angles and corresponding distances to turning rates
-  std::map<std::vector<int>, std::vector<double>>* qtable;
+  std::map<std::vector<int>, std::vector<double>>* qtable = new std::map<std::vector<int>, std::vector<double>>;
   std::vector<double> empty = {0,0,0,0,0};
   //speed to turn at       L,l,0,r,R... roughly
   for (int i = 0; i < 3; i++)//0
