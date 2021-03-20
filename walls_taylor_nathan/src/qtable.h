@@ -9,11 +9,16 @@
 #include <cmath>
 #include <ctime>
 #include <vector>
+#include <fstream>
+#include <iostream>
+#include <sstream>
 
 class Q_table
 {
 public:
   Q_table();
+  void readTable(std::ifstream &inFile);
+  void writeTable();
   int getReward(std::vector<int> state);
   void updateTable(std::vector<int> p_state,int p_action, std::vector<int> c_state);
   double getAction(std::vector<int> c_state);
@@ -24,8 +29,40 @@ private:
 
 Q_table::Q_table()
 {
+  srand(time(NULL));
   //build Q-table
-  std::vector<double> empty = {0,0,0,0,0};
+  //std::ifstream inFile("qsave.txt");
+  if (false/*inFile*/)//if a saved qtable already exists
+    {
+      //readTable(inFile);
+      //inFile.close();
+    }
+  else
+    {
+      std::vector<double> empty = {0,0,0,0,0};
+      for (int i = 0; i < 3; i++)//0
+	{
+	  for (int j = 0; j < 3; j++)//45
+	    {
+	      for (int k = 0; k < 3; k++)//90
+		{
+		  for (int l = 0; l < 3; l++)//135
+		    {
+		      for (int m = 0; m < 3; m++)//180
+			{
+			  //0 is close, 1 is medium, 2 is far
+			  std::vector<int> temp = {i,j,k,l,m};
+			  qsa[temp] = empty;
+			}
+		    }
+		}
+	    }
+	}
+    }
+}
+
+void Q_table::readTable(std::ifstream &inFile)
+{
     for (int i = 0; i < 3; i++)//0
     {
       for (int j = 0; j < 3; j++)//45
@@ -37,14 +74,55 @@ Q_table::Q_table()
 		  for (int m = 0; m < 3; m++)//180
 		    {
 		      //0 is close, 1 is medium, 2 is far
-		      std::vector<int> temp = {i,j,k,l,m};
-		      qsa[temp] = empty;
+		      std::vector<int> tstate = {i,j,k,l,m};
+		      std::vector<double> values;
+		      if (!inFile.eof())
+			{
+			  std::string line = "";
+			  getline(inFile, line);
+			  std::istringstream inStream(line);
+			  while (!inStream.eof())
+			    {
+			      std::string value;
+			      inStream >> value;
+			      values.push_back(std::stod(value));
+			    }
+			}
+		      qsa[tstate] = values;
 		    }
 		}
 	    }
 	}
     }
-    srand(time(NULL));
+}
+
+void Q_table::writeTable()
+{
+  std::ofstream outFile("/home/wit/catkin_ws/src/walls_taylor_nathan/src/qsave.txt");
+  for (int i = 0; i < 3; i++)//0
+    {
+      for (int j = 0; j < 3; j++)//45
+	{
+	  for (int k = 0; k < 3; k++)//90
+	    {
+	      for (int l = 0; l < 3; l++)//135
+		{
+		  for (int m = 0; m < 3; m++)//180
+		    {
+		      std::vector<int> tstate = {i,j,k,l,m};
+		      std::vector<double> tvalues = qsa.at(tstate);
+		      std::string svals = std::to_string(tvalues[0]);
+		      for (int i = 1; i < tvalues.size(); i++)
+			{
+			  svals += " " + std::to_string(tvalues[i]);
+			}
+		      outFile << svals << std::endl;
+		    }
+		}
+	    }
+	}
+    }
+  outFile.close();
 }
 
 int Q_table::getReward(std::vector<int> state)
