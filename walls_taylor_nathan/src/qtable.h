@@ -31,11 +31,11 @@ Q_table::Q_table()
 {
   srand(time(NULL));
   //build Q-table
-  //std::ifstream inFile("qsave.txt");
-  if (false/*inFile*/)//if a saved qtable already exists
+  std::ifstream inFile("/home/wit/catkin_ws/src/walls_taylor_nathan/src/qsave.txt");
+  if (inFile)//if a saved qtable already exists
     {
-      //readTable(inFile);
-      //inFile.close();
+      readTable(inFile);
+      inFile.close();
     }
   else
     {

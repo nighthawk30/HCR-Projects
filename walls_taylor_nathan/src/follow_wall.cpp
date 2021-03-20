@@ -8,6 +8,7 @@
 #include "sensor_msgs/LaserScan.h"
 #include "gazebo_msgs/SetModelState.h"
 #include "std_msgs/String.h"
+#include "qtable.h"
 #include <string>
 #include <map>
 #include <cstdlib>
@@ -49,10 +50,6 @@ void Listen::poseCallback(const sensor_msgs::LaserScan::ConstPtr& scan)
 
 void moveTurn(double distance, double ang_degrees);//ccw+
 std::vector<int> getState(Listen listening);
-double getAction(std::map<std::vector<int>, std::vector<double>>* qtable, std::vector<int> discrete_state);
-std::map<std::vector<int>, std::vector<double>>* setTable();
-int getReward(std::vector<int> discrete_state);
-void updateTable(std::map<std::vector<int>, std::vector<double>>* qtable, std::vector<int> p_state, int p_action, std::vector<int> d_state);
 
 ros::Publisher pub;
 ros::Subscriber sub;
@@ -94,16 +91,11 @@ int main(int argc, char **argv)
    */
 
   //TESTING CODE
+  Q_table qt;
+  //ROS_INFO("Size: %i", qt.qsa.size());
+  qt.writeTable();
 
-
-  //std::map<std::vector<int>, std::vector<double>>* qt;// = setTable();
-  //maps angles and corresponding distances to turning rates
-  std::map<std::vector<int>, std::vector<double>>* qt = setTable();
-  
-  
-  ROS_INFO("Size: %i", qt->size());
-
-
+  ROS_INFO("-------------------");
   //TESTING CODE
 
   
@@ -119,85 +111,6 @@ int main(int argc, char **argv)
   */
   ros::spin();
 }
-
-//This is where the magic happens
-void updateTable(std::map<std::vector<int>, std::vector<double>>* qtable, std::vector<int> p_state,int p_action, std::vector<int> d_state)
-{
-  double a = .2;//learning rate
-  double g = .8;//discount factor
-  std::vector<double> old_values = qtable->at(p_state);//Q(s,a) 1 out of 243
-  std::vector<double> current_values = qtable->at(p_state);
-  double prev_value = old_values[p_action];//1 of 5
-  int reward = getReward(d_state);
-  //Find highest potential next value
-  int high_index = 0;
-  for (int i = 0; i < current_values.size(); i++)
-    if (current_values[i] > current_values[high_index])
-      	high_index = i;
-  double high_next = current_values[high_index];
-  
-  //set new q-value
-  double update = prev_value + a * (reward + g * high_next - prev_value);
-  (*qtable)[p_state][p_action] = update;//not actually old anymore
-}
-
-int getReward(std::vector<int> d_state)
-{
-  int reward = 0;
-  //negative reward for everything except being the right distance away from the left wall
-  if (d_state[0] == 0 || d_state[1] == 0 || d_state[2] == 0 ||
-      d_state[3] == 0 || d_state[4] == 0 || d_state[1] == 2)
-    {
-      reward = -1;
-    }
-  return reward;
-}
-
-//DEFINE STATE ACTION PAIRS - SWITCH TO QLEARNING
-double getAction(std::map<std::vector<int>, std::vector<double>>* qt, std::vector<int> d_state)
-{
-  int action[5] = {-10,-5,0,5,10};
-  std::vector<double> plane = qt->at(d_state);
-
-  //find element with highest probability - change to choose one randomly based on probability
-
-  //THIS CHOOSES AN ACTION WITH THE HIGHEST VALUE, SWITCH TO QLEARNING REWARD AND GREED
-  int high_index = 0;
-  for (int i = 0; i < plane.size(); i++)
-    if (plane[i] > plane[high_index])
-      	high_index = i;
-  
-  return action[high_index];
-}
-
-//Now this is pod racing!
-std::map<std::vector<int>, std::vector<double>>* setTable()
-{
-  //maps angles and corresponding distances to turning rates
-  std::map<std::vector<int>, std::vector<double>>* qtable = new std::map<std::vector<int>, std::vector<double>>;
-  std::vector<double> empty = {0,0,0,0,0};
-  //speed to turn at       L,l,0,r,R... roughly
-  for (int i = 0; i < 3; i++)//0
-    {
-      for (int j = 0; j < 3; j++)//45
-	{
-	  for (int k = 0; k < 3; k++)//90
-	    {
-	      for (int l = 0; l < 3; l++)//135
-		{
-		  for (int m = 0; m < 3; m++)//180
-		    {
-		      //0 is close, 1 is medium, 2 is far
-		      std::vector<int> temp = {i,j,k,l,m};
-		      (*qtable)[temp] = empty;
-		    }
-		}
-	    }
-	}
-    }
-  return qtable;
-}
-
 //define states and return current state
 std::vector<int> getState(Listen listening)
 {
