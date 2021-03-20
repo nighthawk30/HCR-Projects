@@ -36,6 +36,15 @@ void Listen::poseCallback(const sensor_msgs::LaserScan::ConstPtr& scan)
   c_state[2] = scan->ranges[0];//forward
   c_state[3] = scan->ranges[45];
   c_state[4] = scan->ranges[90];//right
+  //Debugging
+  /*
+  ROS_INFO("Left: %f", scan->ranges[270]);
+  ROS_INFO("1:30: %f", scan->ranges[315]);
+  ROS_INFO("Forward: %f", scan->ranges[0]);
+  ROS_INFO("10:30: %f", scan->ranges[45]);
+  ROS_INFO("Right: %f", scan->ranges[90]);
+  ROS_INFO("--------------------------");
+  */
 }
 
 void moveTurn(double distance, double ang_degrees);//ccw+
