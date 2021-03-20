@@ -14,7 +14,7 @@
 #include <cmath>
 #include <vector>
 
-class Listen
+class Listen//callback class
 {
 public:
   Listen()
@@ -26,15 +26,7 @@ public:
   std::vector<double> c_state;
 };
 
-ros::Publisher pub;
-ros::Subscriber sub;
-ros::ServiceClient client;
-
-void moveTurn(double distance, double ang_degrees);//ccw+
-std::vector<int> getState(Listen listening);
-double getAction(std::map<std::vector<int>, std::vector<double>>* qt, std::vector<int> d_state);
-std::map<std::vector<int>, std::vector<double>>* setTable();
-
+//callback method
 void Listen::poseCallback(const sensor_msgs::LaserScan::ConstPtr& scan)
 {
   //360 degrees 360 size array
@@ -45,6 +37,17 @@ void Listen::poseCallback(const sensor_msgs::LaserScan::ConstPtr& scan)
   c_state[3] = scan->ranges[45];
   c_state[4] = scan->ranges[90];//right
 }
+
+void moveTurn(double distance, double ang_degrees);//ccw+
+std::vector<int> getState(Listen listening);
+double getAction(std::map<std::vector<int>, std::vector<double>>* qtable, std::vector<int> discrete_state);
+std::map<std::vector<int>, std::vector<double>>* setTable();
+int getReward(std::vector<int> discrete_state);
+void updateTable(std::map<std::vector<int>, std::vector<double>>* qtable, std::vector<int> p_state, int p_action, std::vector<int> d_state);
+
+ros::Publisher pub;
+ros::Subscriber sub;
+ros::ServiceClient client;
 
 int main(int argc, char **argv)
 {
@@ -73,17 +76,26 @@ int main(int argc, char **argv)
 
   //TESTING CODE
 
+  /*
+1. Choose action based on current state (e-greedy)
+2. Execute action and observe state
+3. Calculate reward
+4. Update Q-table: with current reward + highest reward of next possible action state pair
+5. Check termination conditions
+   */
+
+  //TESTING CODE
 
 
   //std::map<std::vector<int>, std::vector<double>>* qt;// = setTable();
   //maps angles and corresponding distances to turning rates
   std::map<std::vector<int>, std::vector<double>>* qt = setTable();
-
+  
+  
   ROS_INFO("Size: %i", qt->size());
 
 
   //TESTING CODE
-
 
   
   //Run
@@ -97,6 +109,39 @@ int main(int argc, char **argv)
     }
   */
   ros::spin();
+}
+
+//This is where the magic happens
+void updateTable(std::map<std::vector<int>, std::vector<double>>* qtable, std::vector<int> p_state,int p_action, std::vector<int> d_state)
+{
+  double a = .2;//learning rate
+  double g = .8;//discount factor
+  std::vector<double> old_values = qtable->at(p_state);//Q(s,a) 1 out of 243
+  std::vector<double> current_values = qtable->at(p_state);
+  double prev_value = old_values[p_action];//1 of 5
+  int reward = getReward(d_state);
+  //Find highest potential next value
+  int high_index = 0;
+  for (int i = 0; i < current_values.size(); i++)
+    if (current_values[i] > current_values[high_index])
+      	high_index = i;
+  double high_next = current_values[high_index];
+  
+  //set new q-value
+  double update = prev_value + a * (reward + g * high_next - prev_value);
+  (*qtable)[p_state][p_action] = update;//not actually old anymore
+}
+
+int getReward(std::vector<int> d_state)
+{
+  int reward = 0;
+  //negative reward for everything except being the right distance away from the left wall
+  if (d_state[0] == 0 || d_state[1] == 0 || d_state[2] == 0 ||
+      d_state[3] == 0 || d_state[4] == 0 || d_state[1] == 2)
+    {
+      reward = -1;
+    }
+  return reward;
 }
 
 //DEFINE STATE ACTION PAIRS - SWITCH TO QLEARNING
@@ -152,16 +197,16 @@ std::vector<int> getState(Listen listening)
     {
       if (listening.c_state[i] > .18)
 	{
-	  d_state[i] = 2;
+	  d_state[i] = 2;//far
 	}
       else if (listening.c_state[i] < .18 &&
 	       listening.c_state[i] > .16)
 	{
-	  d_state[i] = 1;
+	  d_state[i] = 1;//medium
 	}
       else// < .16
 	{
-	  d_state[i] = 0;
+	  d_state[i] = 0;//close
 	}
     }  
   return d_state;
