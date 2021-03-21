@@ -112,7 +112,6 @@ int main(int argc, char **argv)
 	  if (reward == 0)//success condition update
 	    {
 	      steps_followed++;
-	      ROS_INFO("Steps Wall Followed: %i", steps_followed);
 	      if (steps_followed > 1000)
 		{
 		  break;
@@ -120,6 +119,7 @@ int main(int argc, char **argv)
 	    }
 	  else
 	    steps_followed = 0;
+	  ROS_INFO("Steps Wall Followed: %i", steps_followed);
 
 	  //4. Update Q-table
 	  qt.updateTable(past_state, act_index, current_state);
