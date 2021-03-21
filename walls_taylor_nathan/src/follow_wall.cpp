@@ -9,6 +9,8 @@
 #include "gazebo_msgs/SetModelState.h"
 #include "std_msgs/String.h"
 #include "qtable.h"
+#include "setstate.h"
+
 #include <string>
 #include <map>
 #include <cstdlib>
@@ -24,81 +26,27 @@ public:
     //relative directions
     c_state = {0,0,0,0,0};//continuous state
   }
-  void poseCallback(const sensor_msgs::LaserScan::ConstPtr& scan);
+  void poseCallback(const sensor_msgs::LaserScan::ConstPtr& scan)
+  {
+    //360 degrees 360 size array
+    //ROS_INFO("Left: %f", left_dist);//comment out
+    c_state[0] = scan->ranges[270];//left
+    c_state[1] = scan->ranges[315];
+    c_state[2] = scan->ranges[0];//forward
+    c_state[3] = scan->ranges[45];
+    c_state[4] = scan->ranges[90];//right
+    //Debugging
+    /*
+      ROS_INFO("Left: %f", scan->ranges[270]);
+      ROS_INFO("1:30: %f", scan->ranges[315]);
+      ROS_INFO("Forward: %f", scan->ranges[0]);
+      ROS_INFO("10:30: %f", scan->ranges[45]);
+      ROS_INFO("Right: %f", scan->ranges[90]);
+      ROS_INFO("--------------------------");
+    */
+  }
   std::vector<double> c_state;
 };
-
-//callback method
-void Listen::poseCallback(const sensor_msgs::LaserScan::ConstPtr& scan)
-{
-  //360 degrees 360 size array
-  //ROS_INFO("Left: %f", left_dist);//comment out
-  c_state[0] = scan->ranges[270];//left
-  c_state[1] = scan->ranges[315];
-  c_state[2] = scan->ranges[0];//forward
-  c_state[3] = scan->ranges[45];
-  c_state[4] = scan->ranges[90];//right
-  //Debugging
-  /*
-  ROS_INFO("Left: %f", scan->ranges[270]);
-  ROS_INFO("1:30: %f", scan->ranges[315]);
-  ROS_INFO("Forward: %f", scan->ranges[0]);
-  ROS_INFO("10:30: %f", scan->ranges[45]);
-  ROS_INFO("Right: %f", scan->ranges[90]);
-  ROS_INFO("--------------------------");
-  */
-}
-
-class SetState
-{
-public:
-  SetState();
-  gazebo_msgs::SetModelState resetState();
-  std::vector<double> toQuaternion(std::vector<double> ypr);
-private:
-  double PI = 3.141592653589693;
-  ros::ServiceClient client;
-  std::vector<std::pair<double,double>> start_poses;
-};
-
-SetState::SetState()
-{
-  srand(time(NULL));
-  start_poses.push_back(std::pair<double,double>(0,0));
-}
-
-gazebo_msgs::SetModelState SetState::resetState()
-{
-  int rstate = rand() % start_poses.size();
-  gazebo_msgs::SetModelState reset;
-  reset.request.model_state.model_name = "triton_lidar";
-  reset.request.model_state.pose.position.x = start_poses[rstate].first;
-  reset.request.model_state.pose.position.y = start_poses[rstate].second;
-  std::vector<double> q_msg = toQuaternion({(double)(rand() % 360),0,0});//choose random orientation
-  reset.request.model_state.pose.orientation.w = q_msg[0];
-  reset.request.model_state.pose.orientation.x = q_msg[1];
-  reset.request.model_state.pose.orientation.y = q_msg[2];
-  reset.request.model_state.pose.orientation.z = q_msg[3];
-  return reset;
-}
-
-std::vector<double> SetState::toQuaternion(std::vector<double> ypr)
-{
-  std::vector<double> quat;
-  //from https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
-  double cy = cos(ypr[0] * 0.5 * PI/180);
-  double sy = sin(ypr[0] * 0.5 * PI/180);
-  double cp = cos(ypr[1] * 0.5 * PI/180);
-  double sp = sin(ypr[1] * 0.5 * PI/180);
-  double cr = cos(ypr[2] * 0.5 * PI/180);
-  double sr = sin(ypr[2] * 0.5 * PI/180);
-  quat.push_back(cr * cp * cy + sr * sp * sy);//w
-  quat.push_back(sr * cp * cy - cr * sp * sy);//x
-  quat.push_back(cr * sp * cy + sr * cp * sy);//y
-  quat.push_back(cr * cp * sy - sr * sp * cy);//z
-  return quat;
-}
-
 
 void moveTurn(double distance, double ang_degrees);//ccw+
 std::vector<int> getState(Listen listening);

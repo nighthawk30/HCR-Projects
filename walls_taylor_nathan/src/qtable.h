@@ -2,6 +2,9 @@
   Nathan Taylor
   3/20/21
 */
+#ifndef _QTABLE_H
+#define _QTABLE_H
+
 #include "ros/ros.h"
 #include <string>
 #include <map>
@@ -179,3 +182,5 @@ double Q_table::getAction(std::vector<int> c_state)
     }
   return turn;
 }
+
+#endif
