@@ -62,8 +62,8 @@ Q_table::Q_table()
 }
 
 void Q_table::readTable(std::ifstream &inFile)
-{
-    for (int i = 0; i < 3; i++)//0
+{ 
+  for (int i = 0; i < 3; i++)//0
     {
       for (int j = 0; j < 3; j++)//45
 	{
@@ -76,7 +76,7 @@ void Q_table::readTable(std::ifstream &inFile)
 		      //0 is close, 1 is medium, 2 is far
 		      std::vector<int> tstate = {i,j,k,l,m};
 		      std::vector<double> values;
-		      if (!inFile.eof())
+		      if (!inFile.eof())//if the file exists, read values in
 			{
 			  std::string line = "";
 			  getline(inFile, line);
@@ -87,8 +87,8 @@ void Q_table::readTable(std::ifstream &inFile)
 			      inStream >> value;
 			      values.push_back(std::stod(value));
 			    }
+			  qsa[tstate] = values;
 			}
-		      qsa[tstate] = values;
 		    }
 		}
 	    }

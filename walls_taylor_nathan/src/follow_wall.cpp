@@ -8,6 +8,7 @@
 #include "sensor_msgs/LaserScan.h"
 #include "gazebo_msgs/SetModelState.h"
 #include "std_msgs/String.h"
+#include "tf2/LinearMath/Quaternion.h"
 #include "qtable.h"
 #include <string>
 #include <map>
@@ -78,7 +79,7 @@ int main(int argc, char **argv)
   reset.request.model_state.pose.position.x = 3.7;
   client.call(reset);
   //moveTurn(0,-90);
-  ROS_INFO("Setup Complete\n-------------------");
+  ROS_INFO("Setup Complete: -------------------");
 
   //TESTING CODE
 
@@ -94,8 +95,8 @@ int main(int argc, char **argv)
   Q_table qt;
   //ROS_INFO("Size: %i", qt.qsa.size());
   qt.writeTable();
-
-  ROS_INFO("-------------------");
+  
+  ROS_INFO("Simulation Complete: -------------------");
   //TESTING CODE
 
   
