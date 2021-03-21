@@ -96,7 +96,6 @@ int main(int argc, char **argv)
       ROS_INFO("Episode: %i", episode_num);
       while (!fail)//episodes training (failed loop)
 	{
-	  ROS_INFO("Steps following a wall: %i", steps_followed);
 	  ros::spinOnce();
 	  //1. Choose Action based on current state (e-greedy)
 	  past_state = getState(listening);
@@ -110,9 +109,15 @@ int main(int argc, char **argv)
 
 	  //3. Calculate Reward
 	  int reward = qt.getReward(current_state);
-	  ROS_INFO("Reward %i", reward);
 	  if (reward == 0)//success condition update
-	    steps_followed++;
+	    {
+	      steps_followed++;
+	      ROS_INFO("Steps Wall Followed: %i", steps_followed);
+	      if (steps_followed > 1000)
+		{
+		  break;
+		}
+	    }
 	  else
 	    steps_followed = 0;
 
