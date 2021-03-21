@@ -8,7 +8,6 @@
 #include "sensor_msgs/LaserScan.h"
 #include "gazebo_msgs/SetModelState.h"
 #include "std_msgs/String.h"
-#include "tf2/LinearMath/Quaternion.h"
 #include "qtable.h"
 #include <string>
 #include <map>
@@ -49,6 +48,7 @@ void Listen::poseCallback(const sensor_msgs::LaserScan::ConstPtr& scan)
   */
 }
 
+std::vector<double> toQuaternion(std::vector<double> ypr);
 void moveTurn(double distance, double ang_degrees);//ccw+
 std::vector<int> getState(Listen listening);
 
@@ -71,18 +71,46 @@ int main(int argc, char **argv)
 
   //init time
   ros::Duration(2.0).sleep();
-  
+
+  //TESTING
+
   //Setup - change to move to a random position on the map
   //maybe only a selection of a set of positions
   gazebo_msgs::SetModelState reset;
   reset.request.model_state.model_name = "triton_lidar";
   reset.request.model_state.pose.position.x = 3.7;
   client.call(reset);
-  //moveTurn(0,-90);
+
+  ros::spinOnce();
+  
+  ROS_INFO("Left: %f", listening.c_state[0]);
+  ROS_INFO("1:30: %f", listening.c_state[1]);
+  ROS_INFO("Forward: %f", listening.c_state[2]);
+  ROS_INFO("10:30: %f", listening.c_state[3]);
+  ROS_INFO("Right: %f", listening.c_state[4]);
+  ROS_INFO("--------------------------");
+  
+
+  std::vector<double> q_msg = toQuaternion({0,0,0});
+  reset.request.model_state.pose.orientation.w = q_msg[0];
+  reset.request.model_state.pose.orientation.x = q_msg[1];
+  reset.request.model_state.pose.orientation.y = q_msg[2];
+  reset.request.model_state.pose.orientation.z = q_msg[3];
+
+  client.call(reset);
+
+  ros::spinOnce();
+  
   ROS_INFO("Setup Complete: -------------------");
 
-  //TESTING CODE
+  ROS_INFO("Left: %f", listening.c_state[0]);
+  ROS_INFO("1:30: %f", listening.c_state[1]);
+  ROS_INFO("Forward: %f", listening.c_state[2]);
+  ROS_INFO("10:30: %f", listening.c_state[3]);
+  ROS_INFO("Right: %f", listening.c_state[4]);
 
+  ROS_INFO("--------------------------");
+  
   /*
 1. Choose action based on current state (e-greedy)
 2. Execute action and observe state
@@ -95,7 +123,16 @@ int main(int argc, char **argv)
   Q_table qt;
   //ROS_INFO("Size: %i", qt.qsa.size());
   qt.writeTable();
-  
+
+  /*
+  tf2::Quaternion q_tf;
+  geometry_msgs::Quaternion q_msg;
+  q_tf.setRPY(0,0,90);
+  q_tf.normalize();
+  reset.request.model_state.pose.orientation = q_tf;
+  q_msg = tf2::toMsg(q_tf);
+  ROS_INFO("%d",q_msg.x);
+*/  
   ROS_INFO("Simulation Complete: -------------------");
   //TESTING CODE
 
@@ -112,6 +149,25 @@ int main(int argc, char **argv)
   */
   ros::spin();
 }
+
+std::vector<double> toQuaternion(std::vector<double> ypr)
+{
+  std::vector<double> quat;
+  //from https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
+    double cy = cos(ypr[0] * 0.5);
+    double sy = sin(ypr[0] * 0.5);
+    double cp = cos(ypr[1] * 0.5);
+    double sp = sin(ypr[1] * 0.5);
+    double cr = cos(ypr[2] * 0.5);
+    double sr = sin(ypr[2] * 0.5);
+    //
+    quat.push_back(cr * cp * cy + sr * sp * sy);//w
+    quat.push_back(sr * cp * cy - cr * sp * sy);//x
+    quat.push_back(cr * sp * cy + sr * cp * sy);//y
+    quat.push_back(cr * cp * sy - sr * sp * cy);//z
+    return quat;
+}
+
 //define states and return current state
 std::vector<int> getState(Listen listening)
 {
