@@ -24,15 +24,14 @@ public:
   void writeTable();
   int getReward(std::vector<int> state);
   void updateTable(std::vector<int> p_state,int p_action, std::vector<int> c_state);
-  double getAction(std::vector<int> c_state);
+  int getAction(std::vector<int> c_state, float e_greedy);
 private:
   std::map<std::vector<int>, std::vector<double>> qsa;
-  float e;//greeeeddyyyyyy
 };
 
 Q_table::Q_table()
 {
-  srand(time(NULL));
+  srand(time(NULL)); 
   //build Q-table
   std::ifstream inFile("/home/wit/catkin_ws/src/walls_taylor_nathan/src/qsave.txt");
   if (inFile)//if a saved qtable already exists
@@ -160,27 +159,27 @@ void Q_table::updateTable(std::vector<int> p_state,int p_action, std::vector<int
   qsa[p_state][p_action] = update;//not actually old anymore
 }
 
-//DEFINE STATE ACTION PAIRS - SWITCH TO QLEARNING
-double Q_table::getAction(std::vector<int> c_state)
+//USE e Greedy
+int Q_table::getAction(std::vector<int> c_state, float e_greedy)
 {
-  double turn = 0;//angle to turn
-  int action[5] = {-10,-5,0,5,10};
+  double t_index = 0;//index angle to turn
+  //int action[5] = {-10,-5,0,5,10};
   std::vector<double> c_values = qsa.at(c_state);
   float r = (float)rand() / RAND_MAX;//Generate random number from 0 to 1
-  if (r > e)
+  if (r > e_greedy)
     {
       int high_index = 0;
       for (int i = 0; i < c_values.size(); i++)
 	if (c_values[i] > c_values[high_index])
 	  high_index = i;
-      turn = action[high_index];
+      t_index = high_index;
     }
   else
     {
       int randState = rand() % 5;
-      turn = action[randState];
+      t_index = randState;
     }
-  return turn;
+  return t_index;
 }
 
 #endif

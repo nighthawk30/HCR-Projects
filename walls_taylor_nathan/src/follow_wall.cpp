@@ -70,20 +70,77 @@ int main(int argc, char **argv)
   client = node.serviceClient<gazebo_msgs::SetModelState>("/gazebo/set_model_state");
   //init time
   ros::Duration(2.0).sleep();
+  ROS_INFO("SETUP COMPLETE ---------------------------");
+  
+  //TERMINATION CONDITIONS
+  int steps_followed = 0;//number of steps that the wall has been followed (each time reward is 0)
+  float e_initial = .9;
+  float d = .985;
+  int episode_num = 0;
+  double action[5] = {-10,-5,0,5,10};//Turning angles for actions
+  
+  //TRAINING LOOP - HERE WE GOOOOOO
+  while (steps_followed < 1000)//success loop
+    {
+      steps_followed = 0;//reset success condition
+      std::vector<std::vector<int>> history;//store the last three states
+      Q_table qt;//initialize and read in qtable
+      std::vector<int> current_state;
+      std::vector<int> past_state;
+      float e_greedy = e_initial*pow(d, episode_num);//update e value
+      bool fail = false;
 
-  //TESTING
+      gazebo_msgs::SetModelState reset = restart.resetState();
+      client.call(reset);
 
-  //Setup - change to move to a random position on the map
-  //maybe only a selection of a set of positions
-  /*
-  gazebo_msgs::SetModelState reset;
-  reset.request.model_state.model_name = "triton_lidar";
-  reset.request.model_state.pose.position.x = 3.7;
-  client.call(reset);
-  */
+      ROS_INFO("Episode: %i", episode_num);
+      while (!fail)//episodes training (failed loop)
+	{
+	  ROS_INFO("Steps following a wall: %i", steps_followed);
+	  ros::spinOnce();
+	  //1. Choose Action based on current state (e-greedy)
+	  past_state = getState(listening);
+	  int act_index = qt.getAction(past_state, e_greedy);
 
-  gazebo_msgs::SetModelState reset = restart.resetState();
-  client.call(reset);
+	  ros::spinOnce();
+	  //2. Execute Action and observe state
+	  moveTurn(.1, action[act_index]);
+	  ros::spinOnce();
+	  current_state = getState(listening);//observe state
+
+	  //3. Calculate Reward
+	  int reward = qt.getReward(current_state);
+	  ROS_INFO("Reward %i", reward);
+	  if (reward == 0)//success condition update
+	    steps_followed++;
+	  else
+	    steps_followed = 0;
+
+	  //4. Update Q-table
+	  qt.updateTable(past_state, act_index, current_state);
+
+	  //5. Check termination
+	  history.push_back(current_state);
+	  if (history.size() > 3)
+	    {
+	      history.erase(history.begin());
+	      int trapCount = 0;
+	      for (int i = 0; i < history.size(); i++)
+		{
+		  if (history[i] == current_state)
+		    trapCount++;
+		}
+	      
+	      //the past three states are the same and bad, end it
+	      if (trapCount == history.size() && reward == -1)
+		fail = true;
+	    }
+	  
+	  ros::spinOnce();
+	}
+      qt.writeTable();
+      episode_num++;
+    }
   
   /*
 1. Choose action based on current state (e-greedy)
@@ -103,11 +160,12 @@ int main(int argc, char **argv)
 
   
   //Run
-  
+  /*
   double etime = ros::Time::now().toSec() + 30;
   while (ros::Time::now().toSec() < etime)
     {
       //choose action
+      
       ROS_INFO("Left: %f", listening.c_state[0]);
       ROS_INFO("1:30: %f", listening.c_state[1]);
       ROS_INFO("Forward: %f", listening.c_state[2]);
@@ -115,9 +173,10 @@ int main(int argc, char **argv)
       ROS_INFO("Right: %f", listening.c_state[4]);
       ROS_INFO("--------------------------");
       moveTurn(.05,0);
+            
       ros::spinOnce();
     }
-  
+  */
   ros::spin();
 }
 
