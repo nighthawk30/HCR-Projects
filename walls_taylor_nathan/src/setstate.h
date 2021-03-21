@@ -30,7 +30,19 @@ private:
 SetState::SetState()
 {
   srand(time(NULL));
-  start_poses.push_back(std::pair<double,double>(0,0));
+  //list of starting locations for training
+  start_poses.push_back(std::pair<double,double>(3.7,3.7));
+  start_poses.push_back(std::pair<double,double>(3,3.5));
+  start_poses.push_back(std::pair<double,double>(3.7,0));
+  start_poses.push_back(std::pair<double,double>(2.3,-2));
+  start_poses.push_back(std::pair<double,double>(-3,1.5));
+  start_poses.push_back(std::pair<double,double>(-3.5,1));
+  start_poses.push_back(std::pair<double,double>(-1.5,.3));
+  start_poses.push_back(std::pair<double,double>(0,-2.3));
+  start_poses.push_back(std::pair<double,double>(0,-1.5));
+  start_poses.push_back(std::pair<double,double>(-3.5,0));
+  start_poses.push_back(std::pair<double,double>(-3.5,0.5));
+  start_poses.push_back(std::pair<double,double>(2.3,1.5));
 }
 
 gazebo_msgs::SetModelState SetState::resetState()
