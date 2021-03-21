@@ -40,8 +40,8 @@ SetState::SetState()
   start_poses.push_back(std::pair<double,double>(-1.5,.3));
   start_poses.push_back(std::pair<double,double>(0,-2.3));
   start_poses.push_back(std::pair<double,double>(0,-1.5));
-  start_poses.push_back(std::pair<double,double>(-3.5,0));
-  start_poses.push_back(std::pair<double,double>(-3.5,0.5));
+  start_poses.push_back(std::pair<double,double>(-3.7,-.3));
+  start_poses.push_back(std::pair<double,double>(-3.7,0.3));
   start_poses.push_back(std::pair<double,double>(2.3,1.5));
 }
 
