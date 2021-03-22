@@ -78,13 +78,13 @@ int main(int argc, char **argv)
   float d = .985;
   int episode_num = 0;
   double action[5] = {-10,-5,0,5,10};//Turning angles for actions
-  
+  Q_table qt;//initialize and read in qtable
+
   //TRAINING LOOP - HERE WE GOOOOOO
   while (steps_followed < 1000)//success loop
     {
       steps_followed = 0;//reset success condition
       std::vector<std::vector<int>> history;//store the last three states
-      Q_table qt;//initialize and read in qtable
       std::vector<int> current_state;
       std::vector<int> past_state;
       float e_greedy = e_initial*pow(d, episode_num);//update e value
