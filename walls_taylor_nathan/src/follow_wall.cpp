@@ -77,7 +77,14 @@ int main(int argc, char **argv)
   float e_initial = .9;
   float d = .985;
   int episode_num = 0;
-  double action[5] = {-10,-5,0,5,10};//Turning angles for actions
+  std::vector<std::pair<double, double>> actions;
+  actions.push_back(std::pair<double,double>(-5,0));//turn left
+  actions.push_back(std::pair<double,double>(0,0));//dont move (this is shit)
+  actions.push_back(std::pair<double,double>(5,0));//turn right
+  actions.push_back(std::pair<double,double>(-5,.1));//turn and move left
+  actions.push_back(std::pair<double,double>(0,.1));//move
+  actions.push_back(std::pair<double,double>(5,.1));//turn and move right
+
   Q_table qt;//initialize and read in qtable
 
   //TRAINING LOOP - HERE WE GOOOOOO
@@ -103,7 +110,8 @@ int main(int argc, char **argv)
 
 	  ros::spinOnce();
 	  //2. Execute Action and observe state
-	  moveTurn(.1, action[act_index]);
+	  std::pair<double, double> move = actions[act_index];
+	  moveTurn(move.second, move.first);//I know I switched them, get over it
 	  ros::spinOnce();
 	  current_state = getState(listening);//observe state
 
@@ -153,34 +161,16 @@ int main(int argc, char **argv)
 3. Calculate reward
 4. Update Q-table: with current reward + highest reward of next possible action state pair
 5. Check termination conditions
-   */
-
-  //TESTING CODE
-  //Q_table qt;
-  //ROS_INFO("Size: %i", qt.qsa.size());
-  //qt.writeTable();
+  */
 
   ROS_INFO("Simulation Complete: -------------------");
-  //TESTING CODE
-
-  
-  //Run
   /*
-  double etime = ros::Time::now().toSec() + 30;
-  while (ros::Time::now().toSec() < etime)
-    {
-      //choose action
-      
-      ROS_INFO("Left: %f", listening.c_state[0]);
-      ROS_INFO("1:30: %f", listening.c_state[1]);
-      ROS_INFO("Forward: %f", listening.c_state[2]);
-      ROS_INFO("10:30: %f", listening.c_state[3]);
-      ROS_INFO("Right: %f", listening.c_state[4]);
-      ROS_INFO("--------------------------");
-      moveTurn(.05,0);
-            
-      ros::spinOnce();
-    }
+  ROS_INFO("Left: %f", listening.c_state[0]);
+  ROS_INFO("1:30: %f", listening.c_state[1]);
+  ROS_INFO("Forward: %f", listening.c_state[2]);
+  ROS_INFO("10:30: %f", listening.c_state[3]);
+  ROS_INFO("Right: %f", listening.c_state[4]);
+  ROS_INFO("--------------------------");
   */
   ros::spin();
 }

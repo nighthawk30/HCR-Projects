@@ -41,7 +41,7 @@ Q_table::Q_table()
     }
   else
     {
-      std::vector<double> empty = {0,0,0,0,0};
+      std::vector<double> empty = {0,0,0,0,0,0};
       for (int i = 0; i < 3; i++)//0
 	{
 	  for (int j = 0; j < 3; j++)//45
@@ -163,7 +163,7 @@ void Q_table::updateTable(std::vector<int> p_state,int p_action, std::vector<int
 int Q_table::getAction(std::vector<int> c_state, float e_greedy)
 {
   double t_index = 0;//index angle to turn
-  //int action[5] = {-10,-5,0,5,10};
+  //int action[5] = {some pairs though};
   std::vector<double> c_values = qsa.at(c_state);
   float r = (float)rand() / RAND_MAX;//Generate random number from 0 to 1
   if (r > e_greedy)
