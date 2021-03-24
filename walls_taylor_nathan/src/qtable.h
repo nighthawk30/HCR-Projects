@@ -33,7 +33,7 @@ Q_table::Q_table()
 {
   srand(time(NULL)); 
   //build Q-table
-  std::ifstream inFile("/home/wit/catkin_ws/src/walls_taylor_nathan/src/qsave.txt");
+  std::ifstream inFile("/home/wit/catkin_ws/src/walls_taylor_nathan/src/tablesave.txt");
   if (inFile)//if a saved qtable already exists
     {
       readTable(inFile);
@@ -41,7 +41,7 @@ Q_table::Q_table()
     }
   else
     {
-      std::vector<double> empty = {0,0,0,0,0,0};
+      std::vector<double> empty = {0,0,0,0,0};
       for (int i = 0; i < 3; i++)//0
 	{
 	  for (int j = 0; j < 3; j++)//45
@@ -100,7 +100,7 @@ void Q_table::readTable(std::ifstream &inFile)
 
 void Q_table::writeTable()
 {
-  std::ofstream outFile("/home/wit/catkin_ws/src/walls_taylor_nathan/src/qsave.txt");
+  std::ofstream outFile("/home/wit/catkin_ws/src/walls_taylor_nathan/src/tablesave.txt");
   for (int i = 0; i < 3; i++)//0
     {
       for (int j = 0; j < 3; j++)//45
@@ -176,8 +176,7 @@ int Q_table::getAction(std::vector<int> c_state, float e_greedy)
     }
   else
     {
-      int randState = rand() % 5;
-      t_index = randState;
+      t_index = rand() % c_values.size();
     }
   return t_index;
 }

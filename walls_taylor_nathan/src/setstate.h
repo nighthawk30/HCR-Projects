@@ -23,7 +23,6 @@ public:
   std::vector<double> toQuaternion(std::vector<double> ypr);
 private:
   double PI = 3.141592653589693;
-  ros::ServiceClient client;
   std::vector<std::pair<double,double>> start_poses;
 };
 

@@ -7,6 +7,7 @@
 #include "geometry_msgs/Pose.h"
 #include "sensor_msgs/LaserScan.h"
 #include "gazebo_msgs/SetModelState.h"
+#include "gazebo_msgs/GetModelState.h"
 #include "std_msgs/String.h"
 #include "qtable.h"
 #include "setstate.h"
@@ -50,10 +51,13 @@ public:
 
 void moveTurn(double distance, double ang_degrees);//ccw+
 std::vector<int> getState(Listen listening);
+std::pair<double,double> getPosition();
+double getDistance(std::pair<double,double> p1, std:: pair<double,double> p2);
 
 ros::Publisher pub;
 ros::Subscriber sub;
-ros::ServiceClient client;
+ros::ServiceClient client_set;
+ros::ServiceClient client_get;
 
 int main(int argc, char **argv)
 {
@@ -67,7 +71,9 @@ int main(int argc, char **argv)
   SetState restart;
   pub = node.advertise<geometry_msgs::Pose2D>("/triton_lidar/vel_cmd", 10);
   sub = node.subscribe<sensor_msgs::LaserScan>("/scan", 1000, &Listen::poseCallback, &listening);
-  client = node.serviceClient<gazebo_msgs::SetModelState>("/gazebo/set_model_state");
+  client_set = node.serviceClient<gazebo_msgs::SetModelState>("/gazebo/set_model_state");
+  client_get = node.serviceClient<gazebo_msgs::GetModelState>("gazebo/get_model_state");
+
   //init time
   ros::Duration(2.0).sleep();
   ROS_INFO("SETUP COMPLETE ---------------------------");
@@ -78,12 +84,12 @@ int main(int argc, char **argv)
   float d = .985;
   int episode_num = 0;
   std::vector<std::pair<double, double>> actions;
-  actions.push_back(std::pair<double,double>(-5,0));//turn left
-  actions.push_back(std::pair<double,double>(0,0));//dont move (this is shit)
-  actions.push_back(std::pair<double,double>(5,0));//turn right
-  actions.push_back(std::pair<double,double>(-5,.1));//turn and move left
-  actions.push_back(std::pair<double,double>(0,.1));//move
-  actions.push_back(std::pair<double,double>(5,.1));//turn and move right
+  //actions.push_back(std::pair<double,double>(-5,0));//turn left
+  actions.push_back(std::pair<double,double>(-10,.1));//
+  actions.push_back(std::pair<double,double>(-5,.1));//
+  actions.push_back(std::pair<double,double>(0,.1));//
+  actions.push_back(std::pair<double,double>(5,.1));//
+  actions.push_back(std::pair<double,double>(10,.1));//
 
   Q_table qt;//initialize and read in qtable
 
@@ -91,14 +97,14 @@ int main(int argc, char **argv)
   while (steps_followed < 1000)//success loop
     {
       steps_followed = 0;//reset success condition
-      std::vector<std::vector<int>> history;//store the last three states
+      std::vector<std::pair<double,double>> history;//store the last three states
       std::vector<int> current_state;
       std::vector<int> past_state;
       float e_greedy = e_initial*pow(d, episode_num);//update e value
       bool fail = false;
 
       gazebo_msgs::SetModelState reset = restart.resetState();
-      client.call(reset);
+      client_set.call(reset);
 
       ROS_INFO("Episode: %i", episode_num);
       while (!fail)//episodes training (failed loop)
@@ -132,23 +138,28 @@ int main(int argc, char **argv)
 	  //4. Update Q-table
 	  qt.updateTable(past_state, act_index, current_state);
 
-	  //5. Check termination
-	  history.push_back(current_state);
+	  //5. Check termination - REVISE
+	  std::pair<double,double> current_pose = getPosition();
+	  history.push_back(current_pose);
 	  if (history.size() > 3)
 	    {
 	      history.erase(history.begin());
 	      int trapCount = 0;
 	      for (int i = 0; i < history.size(); i++)
 		{
-		  if (history[i] == current_state)
+		  if (getDistance(history[i], current_pose) < .01)
 		    trapCount++;
 		}
 	      
 	      //the past three states are the same and bad, end it
-	      if (trapCount == history.size() && reward == -1)
+	      if (trapCount == history.size())
 		fail = true;
 	    }
-	  
+	  /*
+	    std::pair<double,double> pos = getPosition();
+	    ROS_INFO("X:%f",pos.first);
+	    ROS_INFO("Y:%f",pos.second);
+	  */	  
 	  ros::spinOnce();
 	}
       qt.writeTable();
@@ -173,6 +184,22 @@ int main(int argc, char **argv)
   ROS_INFO("--------------------------");
   */
   ros::spin();
+}
+
+std::pair<double,double> getPosition()
+{
+  gazebo_msgs::GetModelState getPose;
+  getPose.request.model_name = "triton_lidar";
+  client_get.call(getPose);
+  std::pair<double,double> coordinates;
+  coordinates.first = getPose.response.pose.position.x;
+  coordinates.second = getPose.response.pose.position.y;
+  return coordinates;
+}
+
+double getDistance(std::pair<double,double> p1, std:: pair<double,double> p2)
+{
+  return sqrt(pow((p1.first-p2.first),2)+pow(p1.second-p2.second,2));
 }
 
 //define states and return current state
