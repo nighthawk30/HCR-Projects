@@ -168,11 +168,21 @@ int Q_table::getAction(std::vector<int> c_state, float e_greedy)
   float r = (float)rand() / RAND_MAX;//Generate random number from 0 to 1
   if (r > e_greedy)
     {
+      //UPDATE - check if all 0s, then still do random
       int high_index = 0;
+      double untouched = 0;
       for (int i = 0; i < c_values.size(); i++)
-	if (c_values[i] > c_values[high_index])
-	  high_index = i;
-      t_index = high_index;
+	{
+	  untouched += c_values[i];
+	  if (c_values[i] > c_values[high_index])
+	    {
+	      high_index = i;
+	    }
+	}
+      if (untouched == 0)
+	t_index = high_index;
+      else
+	t_index = rand() % c_values.size();
     }
   else
     {
