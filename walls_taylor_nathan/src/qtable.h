@@ -43,13 +43,13 @@ Q_table::Q_table()
   else
     {
       //three ranges, three distances, five actions
-      std::vector<double> empty_state = {0,0,0,0,0};
+      std::vector<double> empty_val = {0,0,0,0,0};
       for (int i = 0; i < 3; i++)//-22.5 -> 22.5
 	  for (int j = 0; j < 3; j++)//22.5 -> 47.5
 	      for (int k = 0; k < 3; k++)//47.5 -> 
 		{  //0 is close, 1 is medium, 2 is far
 		  std::vector<int> temp = {i,j,k};
-		  qsa[temp] = empty_state;
+		  qsa[temp] = empty_val;
 		}
     }
 }
@@ -100,8 +100,7 @@ int Q_table::getReward(std::vector<int> state)
 {
   int reward = 1;
   //negative reward for everything except being the right distance away from the left wall
-  if (state[0] == 0 || state[1] == 0 || state[2] == 0 ||
-      state[3] == 0 || state[4] == 0 || state[0] == 2)
+  if (state[0] == 0 || state[1] == 0 || state[2] == 0 || state[0] == 2)
     reward = -1;//slap wrist
   return reward;
 }
