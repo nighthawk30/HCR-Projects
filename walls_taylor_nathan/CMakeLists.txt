@@ -206,7 +206,7 @@ include_directories(
 # catkin_add_nosetests(test)
 
 #MY Executables
-add_executable(follow_wall src/follow_wall.cpp)
+add_executable(wall_qlearn src/wall_qlearn.cpp)
 
 #Dependencies
-target_link_libraries(follow_wall ${catkin_LIBRARIES})
+target_link_libraries(wall_qlearn ${catkin_LIBRARIES})

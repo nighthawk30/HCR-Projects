@@ -16,5 +16,5 @@
         args="0 0 0 0 -1.58 1.58 camera_link triton_link 50" />
 	<!-- output screen is important for testing if scan works-->
     <node pkg="stingray_sim" name="path_drawing" type="draw_path.py"/>
-    <node pkg="walls_taylor_nathan" name="follow_wall" type="follow_wall" output="screen"/>
+    <node pkg="walls_taylor_nathan" name="wall_qlearn" type="wall_qlearn" output="screen"/>
 </launch>
