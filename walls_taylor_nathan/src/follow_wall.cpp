@@ -1,7 +1,9 @@
 /*
-  Nathan Taylor
-  3/17/21
+  Nathan Taylor  
+3/24/21
+Training Program for QLearning: Robot follows a wall
 */
+
 #include "ros/ros.h"
 #include "geometry_msgs/Pose2D.h"
 #include "geometry_msgs/Pose.h"
@@ -24,29 +26,14 @@ class Listen//callback class
 public:
   Listen()
   {
-    //relative directions
-    c_state = {0,0,0,0,0};//continuous state
+    c_state = std::vector<double>(360,0);
   }
   void poseCallback(const sensor_msgs::LaserScan::ConstPtr& scan)
   {
-    //360 degrees 360 size array
-    //ROS_INFO("Left: %f", left_dist);//comment out
-    c_state[0] = scan->ranges[270];//left
-    c_state[1] = scan->ranges[315];
-    c_state[2] = scan->ranges[0];//forward
-    c_state[3] = scan->ranges[45];
-    c_state[4] = scan->ranges[90];//right
-    //Debugging
-    /*
-      ROS_INFO("Left: %f", scan->ranges[270]);
-      ROS_INFO("1:30: %f", scan->ranges[315]);
-      ROS_INFO("Forward: %f", scan->ranges[0]);
-      ROS_INFO("10:30: %f", scan->ranges[45]);
-      ROS_INFO("Right: %f", scan->ranges[90]);
-      ROS_INFO("--------------------------");
-    */
+    for (int i = 0; i < scan->ranges.size(); i++) 
+      c_state[i] = scan->ranges[i];
   }
-  std::vector<double> c_state;
+  std::vector<double> c_state;//360 size array: distance at each degree
 };
 
 void moveTurn(double distance, double ang_degrees);//ccw+
@@ -82,14 +69,14 @@ int main(int argc, char **argv)
   int steps_followed = 0;//number of steps that the wall has been followed (each time reward is 0)
   float e_initial = .9;
   float d = .985;
-  int episode_num = 0;
+  int episode_num = 550;
   std::vector<std::pair<double, double>> actions;
-  //actions.push_back(std::pair<double,double>(-5,0));//turn left
-  actions.push_back(std::pair<double,double>(-10,.1));//
-  actions.push_back(std::pair<double,double>(-5,.1));//
-  actions.push_back(std::pair<double,double>(0,.1));//
-  actions.push_back(std::pair<double,double>(5,.1));//
-  actions.push_back(std::pair<double,double>(10,.1));//
+  //actions.push_back(std::pair<double,double>(-5,0));//
+  actions.push_back(std::pair<double,double>(-45,.1));//hard left
+  actions.push_back(std::pair<double,double>(-10,.1));//left
+  actions.push_back(std::pair<double,double>(0,.1));//straight
+  actions.push_back(std::pair<double,double>(10,.1));//right
+  actions.push_back(std::pair<double,double>(45,.1));//hard right
 
   Q_table qt;//initialize and read in qtable
 
@@ -104,17 +91,18 @@ int main(int argc, char **argv)
       bool fail = false;
 
       gazebo_msgs::SetModelState reset = restart.resetState();
-      client_set.call(reset);
+      client_set.call(reset);//reset robot to semi-random pose+dir
 
-      ROS_INFO("Episode: %i", episode_num);
+      ROS_INFO("Episode: %i -----------------", episode_num);
       while (!fail)//episodes training (failed loop)
 	{
 	  ros::spinOnce();
+
 	  //1. Choose Action based on current state (e-greedy)
 	  past_state = getState(listening);
 	  int act_index = qt.getAction(past_state, e_greedy);
-
 	  ros::spinOnce();
+	  
 	  //2. Execute Action and observe state
 	  std::pair<double, double> move = actions[act_index];
 	  moveTurn(move.second, move.first);//I know I switched them, get over it
@@ -127,9 +115,7 @@ int main(int argc, char **argv)
 	    {
 	      steps_followed++;
 	      if (steps_followed > 1000)
-		{
 		  break;
-		}
 	    }
 	  else
 	    steps_followed = 0;
@@ -138,51 +124,28 @@ int main(int argc, char **argv)
 	  //4. Update Q-table
 	  qt.updateTable(past_state, act_index, current_state);
 
-	  //5. Check termination - REVISE
-	  std::pair<double,double> current_pose = getPosition();
+	  //5. Check termination
+	  std::pair<double,double> current_pose = getPosition();//get exact pose
 	  history.push_back(current_pose);
 	  if (history.size() > 3)
 	    {
 	      history.erase(history.begin());
 	      int trapCount = 0;
 	      for (int i = 0; i < history.size(); i++)
-		{
-		  if (getDistance(history[i], current_pose) < .01)
-		    trapCount++;
-		}
+		if (getDistance(history[i], current_pose) < .01)//robot has not moved much
+		  trapCount++;
 	      
 	      //the past three states are the same and bad, end it
 	      if (trapCount == history.size())
 		fail = true;
 	    }
-	  /*
-	    std::pair<double,double> pos = getPosition();
-	    ROS_INFO("X:%f",pos.first);
-	    ROS_INFO("Y:%f",pos.second);
-	  */	  
 	  ros::spinOnce();
 	}
-      qt.writeTable();
+      qt.writeTable();//save updates
       episode_num++;
     }
   
-  /*
-1. Choose action based on current state (e-greedy)
-2. Execute action and observe state
-3. Calculate reward
-4. Update Q-table: with current reward + highest reward of next possible action state pair
-5. Check termination conditions
-  */
-
   ROS_INFO("Simulation Complete: -------------------");
-  /*
-  ROS_INFO("Left: %f", listening.c_state[0]);
-  ROS_INFO("1:30: %f", listening.c_state[1]);
-  ROS_INFO("Forward: %f", listening.c_state[2]);
-  ROS_INFO("10:30: %f", listening.c_state[3]);
-  ROS_INFO("Right: %f", listening.c_state[4]);
-  ROS_INFO("--------------------------");
-  */
   ros::spin();
 }
 
@@ -205,22 +168,34 @@ double getDistance(std::pair<double,double> p1, std:: pair<double,double> p2)
 //define states and return current state
 std::vector<int> getState(Listen listening)
 {
-  std::vector<int> d_state(5, 0);//discrete state
+  std::vector<double> min_in_range(5, 0);//minimum distance for each angle range
+  std::vector<int> d_state(5,0);
+  std::vector<std::pair<int,int>> aranges;
+  aranges.push_back(std::pair<int,int>(270,305));//left angle range: 36 degrees
+  aranges.push_back(std::pair<int,int>(306,341));//left forward angle range
+  aranges.push_back(std::pair<int,int>(342,377));//forward angle range
+  aranges.push_back(std::pair<int,int>(378,413));//right forward angle range
+  aranges.push_back(std::pair<int,int>(414,439));//right angle range
+
+  //for each element in d_state
+  for (int i = 0; i < min_in_range.size(); i++)
+    {
+      min_in_range[i] = c_state[aranges[i].first];//set initial value to first in range
+      for (int j = aranges[i].first; j < aranges[i].second; j++)//look through all angles in range 
+	if (min_in_range[i] > c_state[j])//find lowest
+	  min_in_range[i] = c_state[j];
+    }
+  
+  //Determine discrete state based on minimum distance of continuous state
   for (int i = 0; i < d_state.size(); i++)
     {
-      if (listening.c_state[i] > .18)
-	{
+      if (min_in_range[i] > .18)
 	  d_state[i] = 2;//far
-	}
-      else if (listening.c_state[i] < .18 &&
-	       listening.c_state[i] > .16)
-	{
+      else if (min_in_range[i] < .18 &&
+	       min_in_range[i] > .16)
 	  d_state[i] = 1;//medium
-	}
       else// < .16
-	{
 	  d_state[i] = 0;//close
-	}
     }  
   return d_state;
 }
@@ -231,7 +206,7 @@ void moveTurn(double distance, double ang_degrees)
   double angular_speed = .5;
   if (ang_degrees <= 0)
     angular_speed *= -1;
-  double speed = .2;
+  double linear_speed = .5;
   double PI = 3.141592653589693;
   double ang_rad = ang_degrees * PI/180;
   double cdist = 0;//current distance
@@ -242,13 +217,13 @@ void moveTurn(double distance, double ang_degrees)
   while (abs(cang) < abs(ang_rad) || cdist < distance)
     {
       cang = angular_speed * (ros::Time::now().toSec() - start);
-      cdist = speed * (ros::Time::now().toSec() - start);
+      cdist = linear_speed * (ros::Time::now().toSec() - start);
       //set msg
       geometry_msgs::Pose2D msg;
       if (abs(cang) < abs(ang_rad))
 	msg.theta = angular_speed;
       if (cdist < distance)
-	msg.x = speed;
+	msg.x = linear_speed;
       //print message
       pub.publish(msg);
       //give up
