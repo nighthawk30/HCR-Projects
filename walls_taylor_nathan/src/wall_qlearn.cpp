@@ -63,7 +63,6 @@ int main(int argc, char **argv)
   client_get = node.serviceClient<gazebo_msgs::GetModelState>("gazebo/get_model_state");
 
   //init time
-  ros::Duration(2.0).sleep();
   ROS_INFO("SETUP COMPLETE ---------------------------");
   
   //INITIAL CONDITIONS
@@ -97,7 +96,6 @@ int main(int argc, char **argv)
       while (!fail)//episodes training (failed loop)
 	{
 	  ros::spinOnce();
-
 	  //1. Choose Action based on current state (e-greedy)
 	  past_state = getState(listening);
 	  int act_index = qt.getAction(past_state, e_greedy);
@@ -176,9 +174,9 @@ std::vector<int> getState(Listen listening)
   std::vector<double> min_in_range(3, 0);//minimum distance for each angle range
   std::vector<int> d_state(3,0);//discrete state set
   std::vector<std::pair<int,int>> aranges;
-  aranges.push_back(std::pair<int,int>(255,290));//left angle range: 36 degrees
-  aranges.push_back(std::pair<int,int>(295,330));//left forward angle range %360 for actual angle
-  aranges.push_back(std::pair<int,int>(335,370));//forward angle range
+  aranges.push_back(std::pair<int,int>(338,382));//front angle range: 45 degrees
+  aranges.push_back(std::pair<int,int>(23,67));//left forward angle range %360 for actual angle
+  aranges.push_back(std::pair<int,int>(68,112));//left angle range
 
   //for each element in d_state
   for (int i = 0; i < min_in_range.size(); i++)
@@ -234,3 +232,15 @@ void moveTurn(double distance, double ang_degrees)
     }
   pub.publish(stop);
 }
+
+  //EXTENSIVE TESTING
+  /*
+0 Forward
+45 Front Left
+90 left
+135 back left
+180 back
+225 back right
+270 right
+315 front right
+*/
