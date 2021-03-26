@@ -124,9 +124,9 @@ int main(int argc, char **argv)
 	  for (int i = 0; i < past_state.size(); i++)
 	      scount += past_state[i]*pow(3,i);
 	  ROS_INFO("State: %i", scount);
-	  ROS_INF0("Action: %i", move.first);
+	  ROS_INFO("Action: %f", move.first);
 	  ROS_INFO("Reward: %i", reward);
-	  ROS_INF_(" ");
+	  ROS_INFO(" ");
 
 	  //4. Update Q-table
 	  qt.updateTable(past_state, act_index, current_state);
@@ -173,8 +173,10 @@ std::pair<double,double> getPosition()
 }
 
 double getDistance(std::pair<double,double> p1, std:: pair<double,double> p2)
+{
   return sqrt(pow((p1.first-p2.first),2)+pow(p1.second-p2.second,2));
-
+}
+  
 //define states and return current state
 std::vector<int> getState(Listen listening)
 {
