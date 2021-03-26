@@ -118,7 +118,15 @@ int main(int argc, char **argv)
 	    }
 	  else
 	    steps_followed = 0;
-	  ROS_INFO("Steps Wall Followed: %i", steps_followed);
+	  
+	  //DEBUG PRINT
+	  int scount = 0;
+	  for (int i = 0; i < past_state.size(); i++)
+	      scount += past_state[i]*pow(3,i);
+	  ROS_INFO("State: %i", scount);
+	  ROS_INF0("Action: %i", move.first);
+	  ROS_INFO("Reward: %i", reward);
+	  ROS_INF_(" ");
 
 	  //4. Update Q-table
 	  qt.updateTable(past_state, act_index, current_state);
@@ -156,7 +164,7 @@ std::pair<double,double> getPosition()
   std::pair<double,double> coordinates;
   coordinates.first = getPose.response.pose.position.x;
   coordinates.second = getPose.response.pose.position.y;
-  if (getPose.response.pose.position.z > 1)
+  if (getPose.response.pose.position.z > .1)
     {
       ROS_INFO("NO CAPES");//The robot will start flying sometimes when it hits a wall
       coordinates.first = -5000;
@@ -165,9 +173,7 @@ std::pair<double,double> getPosition()
 }
 
 double getDistance(std::pair<double,double> p1, std:: pair<double,double> p2)
-{
   return sqrt(pow((p1.first-p2.first),2)+pow(p1.second-p2.second,2));
-}
 
 //define states and return current state
 std::vector<int> getState(Listen listening)
@@ -191,10 +197,10 @@ std::vector<int> getState(Listen listening)
   //Determine discrete state based on minimum distance of continuous state
   for (int i = 0; i < d_state.size(); i++)
     {
-      if (min_in_range[i] > .18)
+      if (min_in_range[i] > .3)
 	  d_state[i] = 2;//far
-      else if (min_in_range[i] < .18 &&
-	       min_in_range[i] > .16)
+      else if (min_in_range[i] < .3 &&
+	       min_in_range[i] > .1)
 	  d_state[i] = 1;//medium
       else// < .16
 	  d_state[i] = 0;//close
