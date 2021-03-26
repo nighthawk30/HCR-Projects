@@ -207,6 +207,8 @@ include_directories(
 
 #MY Executables
 add_executable(wall_qlearn src/wall_qlearn.cpp)
+add_executable(wall_qpolicy src/wall_qpolicy.cpp)
 
 #Dependencies
 target_link_libraries(wall_qlearn ${catkin_LIBRARIES})
+target_link_libraries(wall_qpolicy ${catkin_LIBRARIES})
