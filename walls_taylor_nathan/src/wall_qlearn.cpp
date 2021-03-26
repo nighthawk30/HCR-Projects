@@ -63,6 +63,7 @@ int main(int argc, char **argv)
   client_get = node.serviceClient<gazebo_msgs::GetModelState>("gazebo/get_model_state");
 
   //init time
+  ros::Duration(2.0).sleep();
   ROS_INFO("SETUP COMPLETE ---------------------------");
   
   //INITIAL CONDITIONS
