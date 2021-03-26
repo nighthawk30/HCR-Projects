@@ -202,7 +202,7 @@ std::vector<int> getState(Listen listening)
       if (min_in_range[i] > .3)
 	  d_state[i] = 2;//far
       else if (min_in_range[i] < .3 &&
-	       min_in_range[i] > .1)
+	       min_in_range[i] > .2)
 	  d_state[i] = 1;//medium
       else// < .16
 	  d_state[i] = 0;//close
