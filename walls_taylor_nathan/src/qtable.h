@@ -102,7 +102,7 @@ void Q_table::writeTable()
 
 int Q_table::getReward(std::vector<int> state)
 {
-  int reward = 1;
+  int reward = 0;
   //negative reward for everything except being the right distance away from the left wall
   if (state[0] == 0 || state[1] == 0 || state[2] == 0 || state[2] == 2)
     reward = -1;//slap wrist

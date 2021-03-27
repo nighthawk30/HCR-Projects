@@ -70,7 +70,7 @@ int main(int argc, char **argv)
   int steps_followed = 0;//number of steps that the wall has been followed (each time reward is 0)
   float e_initial = .9;
   float d = .985;//reduce this so it trains longer/spends more time in random
-  int episode_num = 18;
+  int episode_num = 0;
   std::vector<std::pair<double, double>> actions;
   actions.push_back(std::pair<double,double>(-45,.1));//hard left
   //actions.push_back(std::pair<double,double>(-10,.1));//left
@@ -110,7 +110,7 @@ int main(int argc, char **argv)
 	  
 	  //3. Calculate Reward
 	  int reward = qt.getReward(current_state);
-	  if (reward == 1)//success condition update
+	  if (past_state[2] == 1)//success condition update
 	    {
 	      steps_followed++;
 	      if (steps_followed > 1000)
@@ -120,13 +120,12 @@ int main(int argc, char **argv)
 	    steps_followed = 0;
 	  
 	  //DEBUG PRINT
-	  int scount = 0;
-	  for (int i = 0; i < past_state.size(); i++)
-	      scount += past_state[i]*pow(3,i);
-	  ROS_INFO("State: %i", scount);
+	  ROS_INFO("LEFT: %i", past_state[2]);
+	  ROS_INFO("FRONT LEFT %i", past_state[1]);
+	  ROS_INFO("FRONT: %i", past_state[0]);
 	  ROS_INFO("Action: %f", move.first);
 	  ROS_INFO("Reward: %i", reward);
-	  ROS_INFO(" ");
+	  ROS_INFO("Steps Followed %i", steps_followed);
 
 	  //4. Update Q-table
 	  qt.updateTable(past_state, act_index, current_state);
@@ -203,10 +202,10 @@ std::vector<int> getState(Listen listening)
   //Determine discrete state based on minimum distance of continuous state
   for (int i = 0; i < d_state.size(); i++)
     {
-      if (min_in_range[i] > .4)
+      if (min_in_range[i] > .9)
 	  d_state[i] = 2;//far
-      else if (min_in_range[i] <= .4 &&
-	       min_in_range[i] > .25)
+      else if (min_in_range[i] <= .9 &&
+	       min_in_range[i] > .6)
 	  d_state[i] = 1;//medium
       else
 	  d_state[i] = 0;//close
