@@ -20,7 +20,7 @@ Qtable setup, save and update for learning
 class Q_table
 {
 public:
-  Q_table();
+  Q_table(std::string mode);
   void readTable(std::ifstream &inFile);
   void writeTable();
   int getReward(std::vector<int> state);
@@ -30,11 +30,15 @@ private:
   std::map<std::vector<int>, std::vector<double>> qsa;
 };
 
-Q_table::Q_table()
+Q_table::Q_table(std::string mode)
 {
-  srand(time(NULL)); 
+  srand(time(NULL));
+  std::ifstream inFile;
   //build Q-table
-  std::ifstream inFile("/home/wit/catkin_ws/src/walls_taylor_nathan/src/tablesave.txt");
+  if (mode == "demo")
+    inFile.open("/home/wit/catkin_ws/src/walls_taylor_nathan/src/tablepolicy.txt");
+  else
+    inFile.open("/home/wit/catkin_ws/src/walls_taylor_nathan/src/tablesave.txt");
   if (inFile)//if a saved qtable already exists
     {
       readTable(inFile);
@@ -43,7 +47,7 @@ Q_table::Q_table()
   else
     {
       //three ranges, three distances, five actions
-      std::vector<double> empty_val = {0,0,0,0,0};
+      std::vector<double> empty_val = {0,0,0};
       for (int i = 0; i < 3; i++)//-22.5 -> 22.5
 	  for (int j = 0; j < 3; j++)//22.5 -> 47.5
 	      for (int k = 0; k < 3; k++)//47.5 -> 

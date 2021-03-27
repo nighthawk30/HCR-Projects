@@ -64,12 +64,12 @@ int main(int argc, char **argv)
   //INITIAL CONDITIONS
   std::vector<std::pair<double, double>> actions;
   actions.push_back(std::pair<double,double>(-45,.1));//hard left
-  actions.push_back(std::pair<double,double>(-10,.1));//left
+  //actions.push_back(std::pair<double,double>(-10,.1));//left
   actions.push_back(std::pair<double,double>(0,.1));//straight
-  actions.push_back(std::pair<double,double>(10,.1));//right
+  //actions.push_back(std::pair<double,double>(10,.1));//right
   actions.push_back(std::pair<double,double>(45,.1));//hard right
 
-  Q_table qt;//initialize and read in qtable
+  Q_table qt("demo");//initialize and read in qtable
   float e_policy = -1;//always choose based on policy
   int starts = 0;
  
@@ -124,10 +124,10 @@ std::vector<int> getState(Listen listening)
   //Determine discrete state based on minimum distance of continuous state
   for (int i = 0; i < d_state.size(); i++)
     {
-      if (min_in_range[i] > .3)
+      if (min_in_range[i] > .4)
 	  d_state[i] = 2;//far
-      else if (min_in_range[i] < .3 &&
-	       min_in_range[i] > .1)
+      else if (min_in_range[i] <= .4 &&
+	       min_in_range[i] > .25)
 	  d_state[i] = 1;//medium
       else// < .16
 	  d_state[i] = 0;//close
@@ -138,7 +138,7 @@ std::vector<int> getState(Listen listening)
 //need to be able to do both at once
 void moveTurn(double distance, double ang_degrees)
 {
-  double angular_speed = 1.9;
+  double angular_speed = 2.3;
   if (ang_degrees <= 0)
     angular_speed *= -1;
   double linear_speed = .3;

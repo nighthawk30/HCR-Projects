@@ -26,11 +26,11 @@ class Listen//callback class
 public:
   Listen()
   {
-    c_state = std::vector<double>(360,0);
+    c_state = std::vector<double>(360,0);//initialize array for scan
   }
   void poseCallback(const sensor_msgs::LaserScan::ConstPtr& scan)
   {
-    for (int i = 0; i < scan->ranges.size(); i++) 
+    for (int i = 0; i < scan->ranges.size(); i++)//update saved scan
       c_state[i] = scan->ranges[i];
   }
   std::vector<double> c_state;//360 size array: distance at each degree
@@ -70,15 +70,15 @@ int main(int argc, char **argv)
   int steps_followed = 0;//number of steps that the wall has been followed (each time reward is 0)
   float e_initial = .9;
   float d = .985;//reduce this so it trains longer/spends more time in random
-  int episode_num = 0;
+  int episode_num = 18;
   std::vector<std::pair<double, double>> actions;
   actions.push_back(std::pair<double,double>(-45,.1));//hard left
-  actions.push_back(std::pair<double,double>(-10,.1));//left
+  //actions.push_back(std::pair<double,double>(-10,.1));//left
   actions.push_back(std::pair<double,double>(0,.1));//straight
-  actions.push_back(std::pair<double,double>(10,.1));//right
+  //actions.push_back(std::pair<double,double>(10,.1));//right
   actions.push_back(std::pair<double,double>(45,.1));//hard right
 
-  Q_table qt;//initialize and read in qtable
+  Q_table qt("learn");//initialize and read in qtable - learn mode
 
   //TRAINING LOOP - HERE WE GOOOOOO
   while (steps_followed < 1000)//success loop
@@ -144,7 +144,10 @@ int main(int argc, char **argv)
 	      
 	      //the past three states are the same and bad, end it
 	      if (trapCount == history.size() || current_pose.first == -5000)//specific flying bug
-		fail = true;
+		{
+		  fail = true;
+		  ROS_INFO("ITS A TRAP!");
+		}
 	    }
 	  ros::spinOnce();
 	}
@@ -156,6 +159,7 @@ int main(int argc, char **argv)
   ros::spin();
 }
 
+//return exact 2d pose of robot for training termination
 std::pair<double,double> getPosition()
 {
   gazebo_msgs::GetModelState getPose;
@@ -167,7 +171,7 @@ std::pair<double,double> getPosition()
   if (getPose.response.pose.position.z > .1)
     {
       ROS_INFO("NO CAPES");//The robot will start flying sometimes when it hits a wall
-      coordinates.first = -5000;
+      coordinates.first = -5000;//impossible value that is specifically checked above
     }
   return coordinates;
 }
@@ -199,12 +203,12 @@ std::vector<int> getState(Listen listening)
   //Determine discrete state based on minimum distance of continuous state
   for (int i = 0; i < d_state.size(); i++)
     {
-      if (min_in_range[i] > .3)
+      if (min_in_range[i] > .4)
 	  d_state[i] = 2;//far
-      else if (min_in_range[i] < .3 &&
-	       min_in_range[i] > .2)
+      else if (min_in_range[i] <= .4 &&
+	       min_in_range[i] > .25)
 	  d_state[i] = 1;//medium
-      else// < .16
+      else
 	  d_state[i] = 0;//close
     }  
   return d_state;
@@ -213,30 +217,30 @@ std::vector<int> getState(Listen listening)
 //need to be able to do both at once
 void moveTurn(double distance, double ang_degrees)
 {
-  double angular_speed = 1.9;
+  double angular_speed = 2.3;
   if (ang_degrees <= 0)
     angular_speed *= -1;
   double linear_speed = .3;
   double PI = 3.141592653589693;
   double ang_rad = ang_degrees * PI/180;
-  double cdist = 0;//current distance
-  double cang = 0;//current angle
-  geometry_msgs::Pose2D stop;
-
+  double cdist = 0;//current distance                                                               
+  double cang = 0;//current angle                                                                   
+  geometry_msgs::Pose2D stop;//d
+ 
   double start = ros::Time::now().toSec();
   while (abs(cang) < abs(ang_rad) || cdist < distance)
     {
       cang = angular_speed * (ros::Time::now().toSec() - start);
       cdist = linear_speed * (ros::Time::now().toSec() - start);
-      //set msg
+      //set msg                                                                                     
       geometry_msgs::Pose2D msg;
       if (abs(cang) < abs(ang_rad))
 	msg.theta = angular_speed;
       if (cdist < distance)
 	msg.x = linear_speed;
-      //print message
+      //print message                                                                               
       pub.publish(msg);
-      //give up
+      //give up                                                                                     
       ros::spinOnce();
     }
   pub.publish(stop);
