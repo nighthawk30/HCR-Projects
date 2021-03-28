@@ -47,7 +47,7 @@ Q_table::Q_table(std::string mode)
   else
     {
       //three ranges, three distances, five actions
-      std::vector<double> empty_val = {0,0,0};
+      std::vector<double> empty_val = {0,0,0,0,0};
       for (int i = 0; i < 3; i++)//-22.5 -> 22.5
 	  for (int j = 0; j < 3; j++)//22.5 -> 47.5
 	      for (int k = 0; k < 3; k++)//47.5 -> 

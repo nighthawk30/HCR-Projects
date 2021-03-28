@@ -73,9 +73,9 @@ int main(int argc, char **argv)
   int episode_num = 0;
   std::vector<std::pair<double, double>> actions;
   actions.push_back(std::pair<double,double>(-45,.1));//hard left
-  //actions.push_back(std::pair<double,double>(-10,.1));//left
+  actions.push_back(std::pair<double,double>(-10,.1));//left
   actions.push_back(std::pair<double,double>(0,.1));//straight
-  //actions.push_back(std::pair<double,double>(10,.1));//right
+  actions.push_back(std::pair<double,double>(10,.1));//right
   actions.push_back(std::pair<double,double>(45,.1));//hard right
 
   Q_table qt("learn");//initialize and read in qtable - learn mode
@@ -203,13 +203,43 @@ std::vector<int> getState(Listen listening)
   for (int i = 0; i < d_state.size(); i++)
     {
       if (min_in_range[i] > .9)
-	  d_state[i] = 2;//far
+	d_state[i] = 2;//far
       else if (min_in_range[i] <= .9 &&
 	       min_in_range[i] > .6)
-	  d_state[i] = 1;//medium
+	d_state[i] = 1;//medium
       else
-	  d_state[i] = 0;//close
-    }  
+	d_state[i] = 0;//close
+    }
+
+  //Separate distance alotment for different angle ranges
+  //LEFT
+  if (min_in_range[2] > .6)
+    d_state[2] = 2;//far
+  else if (min_in_range[2] <= .6 &&
+	   min_in_range[2] > .3)
+    d_state[2] = 1;//medium
+  else
+    d_state[2] = 0;//close
+
+  //Front left
+  if (min_in_range[1] > .9)
+    d_state[1] = 2;//far
+  else if (min_in_range[1] <= .9 &&
+	   min_in_range[1] > .4)
+    d_state[1] = 1;//medium
+  else
+    d_state[1] = 0;//close
+
+  //Front
+  if (min_in_range[0] > .6)
+    d_state[0] = 2;//far
+  else if (min_in_range[0] <= .6 &&
+	   min_in_range[0] > .4)
+    d_state[0] = 1;//medium
+  else
+    d_state[0] = 0;//close
+
+  
   return d_state;
 }
 
