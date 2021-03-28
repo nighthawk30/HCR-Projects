@@ -60,21 +60,6 @@ gazebo_msgs::SetModelState SetState::resetState()
   return reset;
 }
 
-gazebo_msgs::SetModelState SetState::demoState(int s)
-{
-  int initial = s % start_poses.size();
-  gazebo_msgs::SetModelState reset;
-  reset.request.model_state.model_name = "triton_lidar";
-  reset.request.model_state.pose.position.x = start_poses[initial].first;
-  reset.request.model_state.pose.position.y = start_poses[initial].second;
-  std::vector<double> q_msg = toQuaternion({(double)(rand() % 360),0,0});//choose random orientation
-  reset.request.model_state.pose.orientation.w = q_msg[0];
-  reset.request.model_state.pose.orientation.x = q_msg[1];
-  reset.request.model_state.pose.orientation.y = q_msg[2];
-  reset.request.model_state.pose.orientation.z = q_msg[3];
-  return reset;
-}
-
 std::vector<double> SetState::toQuaternion(std::vector<double> ypr)
 {
   std::vector<double> quat;

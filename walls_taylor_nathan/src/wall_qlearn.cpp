@@ -198,18 +198,6 @@ std::vector<int> getState(Listen listening)
 	if (min_in_range[i] > listening.c_state[j % 360])//find lowest
 	  min_in_range[i] = listening.c_state[j % 360];
     }
-  
-  //Determine discrete state based on minimum distance of continuous state
-  for (int i = 0; i < d_state.size(); i++)
-    {
-      if (min_in_range[i] > .9)
-	d_state[i] = 2;//far
-      else if (min_in_range[i] <= .9 &&
-	       min_in_range[i] > .6)
-	d_state[i] = 1;//medium
-      else
-	d_state[i] = 0;//close
-    }
 
   //Separate distance alotment for different angle ranges
   //LEFT
